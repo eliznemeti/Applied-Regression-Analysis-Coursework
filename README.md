@@ -1,4 +1,3 @@
-# BIOS507-Coursework
-BIOS507 SP25
-
 Graduate Course: Emory BIOS507 'Applied Regression Analysis', taught by Dr Joshua Lukemire, Spring 2025, PhD Year 2
+
+Course Description: This is the first regression analysis course in applied statistics designed for BIOS MPH students. Both theoretical and applied aspects of linear regression and generalized linear regression modeling will be covered in this course. The emphasis will be on applications. The first part of the course covers the following topics: simple linear regression, multiple linear regression, confounding and interaction, residual and influence diagnostics, variable transformations, multicollinearity, model selection and validation. The second part of the course includes: generalized linear models, including logistic regression, nominal and ordinal logistic regression, and Poisson regression. 
