@@ -18,6 +18,7 @@ summary(toluca_data)
 toluca_scatterplot <- toluca_data %>%
   ggplot(aes(x=Lot_Size, y=Work_Hours)) + # define our axes
   geom_point(color= "blue")
+toluca_scatterplot
 
 # Step 4 - Once a linear relationship is verified - write down the model + the matrix
 
