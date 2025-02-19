@@ -17,7 +17,8 @@ summary(sbp_ldl_data)
 
 #### Checking Assumptions ####
 
-# check whether linear relationship is an appropriate function via a scatter plot
+# What should we do before fitting the model?
+# Check whether linear relationship is an appropriate function via a scatter plot
 SBP_LDL_scatterplot <- sbp_ldl_data %>%
   ggplot(aes(x = SBP, y = LDL)) + 
   theme_minimal(base_size = 10) + # makes it a clean white background
@@ -25,7 +26,8 @@ SBP_LDL_scatterplot <- sbp_ldl_data %>%
 
 SBP_LDL_scatterplot
 
-# Takeaway: based on the plot it looks like linear regression is a good fit
+# Does a linear relationship appear appropriate?
+# Yes. Now we are ready to start fitting our model. We can start by writing down the assumed regression model.
 
 # Write down the model in terms of a general Y (aka not expectation of Y)
 # Y = ß0 + ß1X + E
