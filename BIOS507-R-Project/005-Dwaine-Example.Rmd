@@ -1,0 +1,22 @@
+---
+title: "005-Dwaine-Example"
+output: html_document
+---
+
+Multiple Linear Regression Lec 07
+Mon, Feb 24
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+
+data_file = "/Users/elizabethnemeti/Documents/GitHub/BIOS507-Coursework/BIOS507-R-Project/dwaine_data.csv"
+dwaine_data <- read.csv(data_file)
+summary(dwaine_data)
+```
+Fit a linear model using dpi and target population to predict sales
+```{r}
+dwaine_full_model <- lm(sales ~ targetpop + dpi, data = dwaine_data)
+dwaine_full_model
+```
+

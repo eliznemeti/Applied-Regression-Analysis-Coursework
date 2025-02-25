@@ -1,0 +1,193 @@
+---
+title: "Homework-2-R-Answers-Problem-3"
+output: 
+  pdf_document:
+    latex_engine: lualatex
+---
+
+BIOS507 Spring 2025 | Dr Lukemire | Elizabeth Nemeti
+Due: February 24 2025
+Problem 3.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+```
+
+This example is adapted from “A modern approach to regression with R” by Simon Sheather. The manager of the purchasing department of a large company is interested in developing a regression model to predict the average amount of time it takes to process a given number of invoices. Data were collected over a period of 30 days. For each data point, information was collected on:
+• The number of invoices processed (Invoices in the dataset)
+• The number of hours it took to process the set of invoices (Time in the dataset)
+```{r}
+data_path = "/Users/elizabethnemeti/Documents/GitHub/BIOS507-Coursework/Homeworks/Homework-2/"
+data_file <- file.path(data_path, "invoices.txt")
+invoices_data <- read.table("invoices.txt", header = TRUE, sep = "") # need to add sep"" so we get individual columns
+```
+
+predictor variable (x) -> number of invoices processed (invoices)
+response variable (y) -> number of hours it took to process the set of invoices (time)
+
+1. What exploratory analyses should you do using the data? Conduct these and report your findings as well as any supporting figures.
+
+Check everything looks okay with summary():
+```{r}
+summary(invoices_data)
+```
+Check whether a linear relationship is an appropriate function via a scatter plot:
+```{r}
+invoices_data_scatterplot <- ggplot(
+  invoices_data, 
+  aes(x = Invoices, y = Time)) +
+  geom_point() +
+  theme_minimal() +
+  xlab("Number of invoices") +
+  ylab("Processing time (hours)")
+invoices_data_scatterplot
+```
+
+Does a linear relationship appear appropriate? -> Yes
+
+2. Write out the assumed regression model for Y . What are your assumptions about the model error?
+
+processing time (hours) = ß0 + ß1(number of invoices) + ε
+
+Assumptions about ε:
+  - the average error should be 0. If it wasn't, that means our model is typically overpredicting/underpredicting.
+  - errors should look like a bell curve and follow a normal distribution
+  - there should be homoscedasticity so the error isn't depending on x
+  - there should not be a pattern in the errors, they need a random spread
+  
+3. Fit the model using R. Write out the estimated model.
+
+```{r}
+invoices_model <- lm(Time ~ Invoices, data = invoices_data)
+summary(invoices_model)
+```
+ß0 (intercept) = 1.4615
+ß1 (slope) = 0.9231
+
+Estimated model -> E[processing time (hours)] = (1.4615) + (0.9231) * (number of invoices)
+
+4. Fill out the ANOVA table for this analysis.
+```{r}
+anova(invoices_model)
+```
+          Df Sum Sq Mean Sq F value    Pr(>F)    
+Invoices   1 20.702 20.7020  190.36 5.175e-14
+Residuals 28  3.045  0.1088      --       --
+Total     29 23.747      --      --       --
+
+5. Interpret the R2 value for this model.
+```{r}
+# R2 = SSreg/SStotal
+R2 = 20.702/23.747
+R2
+```
+
+R squared being 0.8717733 means 87.18% of the variation in processing time can be explained by the number of invoices processed, and it is therefore a good predictor. The remaining % is due to other factors not accounted for with this model.
+
+6. Carry out a hypothesis test to test the null hypothesis that the slope is 0. Be sure to write out the α, the null and alternative hypothesis, the test statistic, critical value, and your final decision. Interpret the result in the context of the study.
+
+H0: β1 = 0 -> Number of invoices processed does not affect processing time (hours)
+HA: β1!= 0 -> Number of invoices processed affects processing time (hours)
+α(alpha) = 0.05
+
+Two tailed test, as we're testing if the slope is different from 0 in either direction, not just one.
+Therefore, α(alpha)/2 = 0.025. 
+
+The test statistic is the t-statistic.
+```{r}
+# t = ß1hat/standard error of ß1hat
+t = 0.0112916/0.0008184
+t
+# 13.797 matches our t value (13.797) in the anova table
+```
+
+df = 28 (30-2)
+critical value = +-2.048 (looked it up in a t-table)
+
+```{r}
+# to check with R
+qt(0.025, df = 28, lower.tail = FALSE)
+```
+
+To decide on whether to reject the null hypothesis, we need to check if |t| > critical value.
+
+|13.79717| > 2.048407, therefore we reject the null hypothesis. 
+
+In the context of the study, this means that number of invoices influences the processing time (hours) significantly. As ß1 is 0.9231, then for each additional invoice processed, processing time increases by 0.9231 hours. The p-value = 5.175e-14, meaning that this result occuring by chance is very low, and we have strong evidence to reject the null hypothesis. 
+
+7. Find and interpret a 99% confidence interval for the slope.
+
+Since we're looking for the 99% CI, our α(alpha) is 0.01, and as we're doing a two tailed test, a/2=0.005, hence to get our critical value here: 
+
+```{r}
+qt(0.005, df = 28, lower.tail = FALSE)
+```
+
+Now, to get our CI:
+```{r}
+# ß1hat +- critical value * SE(ß1hat)
+upper_bound =  0.9231 + 2.763262 * 0.0008184
+upper_bound
+
+lower_bound = 0.9231 - 2.763262 * 0.0008184
+lower_bound
+```
+
+Our 99% CI is (0.9208385 0.9253615), meaning we are 99% confident that the true increase in processing time for each additional invoice processed, falls between 0.9208385-0.9253615 hours.
+
+8. Find and interpret a 95% confidence interval for the amount of time it would take to process a stack of 160 invoices.
+
+Yhat +- critical value * SE(Yhat)
+
+```{r}
+# Yhat = ß0hat + ß1hat * Number of invoices (x)
+Yhat = 1.4615 + (0.9231 * 160)
+Yhat
+```
+
+Predicted processing time is 149.1575 hours.
+
+Now, we need to find our confidence interval.
+
+```{r}
+invoices_mean = mean(invoices_data$Invoices)
+invoices_mean
+
+SS = sum((invoices_data$Invoices - invoices_mean)^2)
+SS
+
+SE = 0.3298 * sqrt((1/30) + ((160 - invoices_mean)^2 / SS))
+SE
+
+critical_value = qt(0.025, df = 28, lower.tail = FALSE)
+critical_value
+
+upper_bound = Yhat + (critical_value * SE)
+upper_bound
+lower_bound = Yhat - (critical_value * SE)
+lower_bound
+```
+With this, we are 95% confident that the true mean processing time falls between 149.0243 and 149.2907 hours when processing a stack of 160 invoices.
+
+9. Find and interpret a 95% prediction interval for the amount of time it would take to process a new stack of 160 invoices.
+
+Yhat +- critical value * SE(pred)
+
+Again, first we need the SE. 
+
+```{r}
+SE_predicted = 0.3298 * sqrt(1 + (1/30) + ((160 - invoices_mean)^2 / SS))
+
+upper_prediction = Yhat + (critical_value * SE_predicted)
+upper_prediction
+lower_prediction = Yhat - (critical_value * SE_predicted)
+lower_prediction
+```
+
+The 95% prediction interval for processing a new stack of 160 invoices is (148.4689, 149.8461).
+
+10. Which interval is wider? Why?
+
+Again, the prediction interval is are wider, because it include uncertainty coming from estimating the mean of the processing time (hours) as well as uncertainty coming from individual observations. 
