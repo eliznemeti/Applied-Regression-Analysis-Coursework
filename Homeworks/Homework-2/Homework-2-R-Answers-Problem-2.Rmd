@@ -102,11 +102,11 @@ t
 # -8.34386 matches our t value (-8.343) from the summary table
 ```
 
-df = 27 (29-2)
+df residual = 27 ( for t test) 
 critical value = +-2.052 (looked it up in a t-table)
 
 ```{r}
-# to check with R
+# t-test with R
 qt(0.025, df = 27, lower.tail = FALSE)
 ```
 

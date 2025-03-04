@@ -64,9 +64,9 @@ invoices_model <- lm(Time ~ Invoices, data = invoices_data)
 summary(invoices_model)
 ```
 ß0 (intercept) = 1.4615
-ß1 (slope) = 0.9231
+ß1 (slope) = 0.0112916
 
-Estimated model -> E[processing time (hours)] = (1.4615) + (0.9231) * (number of invoices)
+Estimated model -> E[processing time (hours)] = (1.4615) + (0.0112916) * (number of invoices)
 
 4. Fill out the ANOVA table for this analysis.
 ```{r}

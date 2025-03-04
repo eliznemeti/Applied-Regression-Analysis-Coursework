@@ -1,0 +1,192 @@
+---
+title: "Homework-3-Q1"
+output: 
+  pdf_document:
+    latex_engine: lualatex
+---
+
+BIOS507 Spring 2025 | Dr Lukemire | Elizabeth Nemeti
+Due: March 3 2025
+
+**Problem 1.**
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+```
+
+The data were logged in catalyst_dataset.csv and contain the following columns:
+
+- Day:  A column logging which day of the study the new technician performed the analysis.
+
+- Intermediate Concentration: A column logging the concentration of the intermediate
+generated during the morning phase of the analysis.
+
+- Yield A: column logging yield of the novel compound obtained by the technician in the
+afternoon using the intermediate species obtained in the morning.
+
+predictor variable (x) -> Intermediate Concentration
+response variable (y) -> Yield
+
+```{r}
+data_path = "/Users/elizabethnemeti/Documents/GitHub/BIOS507-Coursework/Homeworks/Homework-3/"
+data_file <- file.path(data_path, "catalyst_dataset.csv")
+catalyst_data <- read.table("catalyst_dataset.csv", header = TRUE, sep = "") 
+
+head(catalyst_data)
+str(catalyst_data) # data is in 1 var atm
+
+catalyst_data <- read.csv(text = catalyst_data$Day.Intermediate_Concentration.Yield, 
+                          header = FALSE, 
+                          col.names = c("Day", "Intermediate_Concentration", "Yield"))
+
+str(catalyst_data) # now it's in 3 vars
+```
+1. Ignore any potential “problems” in the data and answer the researcher team’s questions using a simple linear regression model. Draw conclusions about the association between concentration of the intermediate species and total yield of the organic compound. Be sure to carry out all of the usual steps in the analysis.
+
+```{r}
+summary(catalyst_data)
+
+catalyst_data_scatterplot <- ggplot(
+  catalyst_data, 
+  aes(x = Intermediate_Concentration, y = Yield)) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "blue") +
+  theme_minimal() +
+  xlab("Intermediate Concentration") +
+  ylab("Yield A")
+catalyst_data_scatterplot
+```
+Does a linear relationship appear appropriate? -> Yes
+
+Assumed regression model for Y -> 
+Yield = ß0 + ß1(Intermediate Concentration) + ε (epsilon)
+
+Assumptions about ε (epsilon):
+- average erorr should be 0
+- errors should folow a normal dist. (bell curve)
+- there should be no pattern in the errors, we should see homoscedasticity
+
+```{r}
+catalyst_model <- lm(Yield ~ Intermediate_Concentration, data = catalyst_data)
+summary(catalyst_model)
+```
+ß0 (intercept) = 7.0189 (aka Y when Intermediate concentration is 0)
+ß1 (slope) = 3.6147 (aka for each unit increase in Intermediate_Concentration, Yield increases by 3.6147)
+
+Estimated model -> E[Yield] = (7.0189) + (3.6147) x (Intermediate_Concentration)
+
+```{r}
+anova(catalyst_model)
+```
+SSreg = 312801
+SS total = 353232
+
+```{r}
+# manual check 
+# R2 = SSreg/SStotal
+R2 = 312801/353232
+R2
+
+# R check
+summary(catalyst_model)$r.squared
+```
+
+R squared being 0.8855398 means 88.55% of the variation in our Yield variable can be explained by the Intermediate Concentration and it's therefore a good predictor, remaining % would have to be explained by other factors beyond Intermediate Concentration.
+
+H0: β1 = 0 -> Intermediate Concentration does not affect Yield
+HA: β1!= 0 -> Intermediate Concentration does affect Yield
+α = 0.05
+
+Two tailed test, as we're testing if the slope is different from 0 in either direction, not just one. Therefore, α(alpha)/2 = 0.025, and the test statistic is the t-statistic.
+
+df residual for t test = 98
+
+```{r}
+# t-value via manual t-test
+# t = ß1hat/standard error of ß1hat
+t = 3.6147/0.1313
+t
+
+# t-value via R table
+summary(catalyst_model)$coefficients
+
+# = 27.53008 matches our t value from the summary table (small diff probably due to internal rounding)
+
+# critical t-value 
+qt(0.025, df = 98, lower.tail = TRUE)  # get -ve val
+qt(0.025, df = 98, lower.tail = FALSE)  # get +ve val
+
+# = ±1.984
+```
+To decide on whether to reject the null hypothesis, we need to check if |t| > critical value.
+
+|27.53008| > 1.984467, therefore we reject the null hypothesis. 
+
+Now, to get our 95% CI:
+```{r}
+# manual check for CI
+
+# ß1hat +- critical value * SE_ß1hat
+
+ß1_hat <- 3.614720
+SE_ß1_hat <- 0.1312757
+t_crit_val <- 1.984467
+
+upper_bound = ß1_hat + t_crit_val * SE_ß1_hat
+upper_bound
+
+lower_bound = ß1_hat - t_crit_val * SE_ß1_hat
+lower_bound
+
+# R check for CI
+confint(catalyst_model)
+```
+To answer the researchers' question: "The team hypothesized that higher concentrations of the intermediate species during the reaction would correlate with increased yields of the final product."
+
+In the context of the study, since the p-value (2.2e-16) is much smaller than α = 0.05, we have strong evidence to reject the H0, and that the Intermediate Concentration influences Yield. The R squared value being 0.886, further supports that Intermediate Concentration influences Yield. We are 95% confident that the interval 3.35-3.872 units contains the true value for ß1, where for each additional unit increase in Intermediate Concentration, Yield increases by 3.6147 units.
+
+2. Perform diagnostics. Is anything wrong? If so, what might be the reason for this?
+
+First, we can use a histogram to check if the data is normally distributed. It appears that the data follows a bell curve and is mostly centered around 0, indicating normal distribution. The only concern is somehwat of a right skew, to be checked with the QQ plot.  
+
+```{r}
+hist(residuals(catalyst_model), breaks = 30, col = "blue", 
+     main = "Histogram", xlab = "Residuals")
+```
+
+Checking for extreme values with a boxplot. No outliers. 
+
+```{r}
+boxplot(catalyst_data$Intermediate_Concentration, 
+        main = "Boxplot", 
+        ylab = "Intermediate Concentration")
+```
+
+Next, we check the sequence plot to see if there's inconsistencies in the experiment being done over the course of the 100 days. There is a clear upwards trend, indicating the experimenter may be improving in creating the concentration as one explanation. However, this would mean that the variable Day is influencing Yield unintentionally, and should be factored in as a predictor too. Additionally, there are some "jumps" in the observations (e.g. 2 larger jumps between days 40-60), that could indicate some kind of inconsistency during measurements.
+
+```{r}
+plot(catalyst_data$Day, catalyst_data$Intermediate_Concentration,
+     pch = 16, # this lets us use black filled in points instead
+     xlab = "Day", 
+     ylab = "Intermediate Concentration",
+     main = "Sequence Plot")
+```
+Next, we'll check the residuals vs fitted values to see if our assumptions on linearity and homoscedasticity are met. Below, it appears that the scatter around 0 is mostly random and no curves are apparent. There are instances of points being quite far from 0 though, and more towards the right of the plot it appears the variance may be increasing, which indicates a  chance of heteroscedasticity. 
+
+```{r}
+plot(catalyst_model$fitted.values, residuals(catalyst_model), 
+     xlab = "Fitted Values", 
+     ylab = "Residuals", 
+     main = "Residuals vs Fitted Values",
+     pch = 16)
+abline(h = 0, col = "blue")
+```
+We check the QQ plot to see from another perspective whether the data follows a normal distribution. While most of the residuals follow the diagonal, both tails deviate away, indicating that the data has more extreme values that aren't accepted under normality, aka "heavy tails".
+
+```{r}
+qqnorm(residuals(catalyst_model), main = "QQ Plot of Residuals")
+qqline(residuals(catalyst_model), col = "blue")
+```
