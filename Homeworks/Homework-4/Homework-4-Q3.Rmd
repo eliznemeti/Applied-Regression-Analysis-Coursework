@@ -11,7 +11,7 @@ Due: March 17 2025
 **Problem 3.**
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, results = "hide")
 library(dplyr)
 library(ggplot2)
 library(tidyverse)
@@ -20,14 +20,14 @@ library(patchwork)
 
 Estimated glomerular filtration rate (GFR) measures the level of kidney function. It can be used to determine the stage of kidney disease. GFR is calculated primarily from the results of blood creatinine test. An investigator is interested in the association between GFR (response) and age, sex, race, and BMI in patients with coronary artery disease. She plans to look at the association in a study cohort of 366 patients aged 19-90 years. This dataset is GFR.txt. The following variables are relevant to this analysis:
 
-• ID: The patient ID (x366)
-• BL_GFR: The estimated glomerular filtration rate
-• Age: the patient age in years
-• Male: male sex, Male = 1 if male and 0 if female
-• Black: race, Black = 1 if black and 0 if non-black
-• BMI: body mass index (kg/m2)
-• BMIcat: BMI categories based on BMI cut points 25 and 30 (3 unique categories)
-
+- ID: The patient ID (x366)
+- BL_GFR: The estimated glomerular filtration rate
+- Age: the patient age in years
+- Male: male sex, Male = 1 if male and 0 if female
+- Black: race, Black = 1 if black and 0 if non-black
+- BMI: body mass index (kg/m2)
+- BMIcat: BMI categories based on BMI cut points 25 and 30 (3 unique categories)   
+    
 - **Y (response variable)**: 'BL_GFR', estimated GFR
 - **X1**: 'Age', patient age in years (19-90 years)
 - **X2**: 'Male', sex
@@ -40,7 +40,7 @@ data_file <- file.path(data_path, "GFR.txt")
 GFR_data <- read.delim(data_file, header = TRUE)
 
 head(GFR_data)
-str(GFR_data)
+#str(GFR_data)
 ```
 **1. Conduct exploratory data analyses for the variables that the researcher is interested in (outcome and predictors). Provide any relevant plots or tables.**
 
@@ -70,7 +70,8 @@ race_barchart <- GFR_data %>%
 
 age_histogram + bmi_histogram + sex_barchart + race_barchart
 ```
-At first glance, the data appears to not have any outliers. To be noted as a potential bias down the line, there is some under-representation in the cohort, with fewer females and fewer black participants included in the study. This could be for various reasons e.g. more men getting diagnose with CAD, or the study taking place in a region with a less diverse racial profile in the local population. There is a skew towards people over 50 participating in the study, however this is not unusual, as all the patients included have been diagnosed with coronary heart disease which manifests later in life. For the BMI variable, if we look up the BMI band ranges (checked, NHS inform site), then under 18.5 is underweight, 18.5-24.9 is healthy, 25-29.9 is overweight, 30-39.9 is obese, and 40+ is severe obesity. Considering this study is American, with participants living in the U.S. and the U.S. has an obesity epidemic, it is less surprising that the majority of the population's BMI is past the "healthy range". Additionally, if we look at a study e.g. Ades & Savage 2018, they state "Over 80% of patients with CHD are overweight or obese", and CAD is the most common type of CHD, therefore, we may naturally have a more obese population as only participants with CAD were selected. 
+
+At first glance, the data appears to not have any outliers. To be noted as a potential bias down the line, there is some under-representation in the cohort, with fewer females and fewer black participants included in the study. This could be for various reasons e.g. more men getting diagnose with CAD, or the study taking place in a region with a less diverse racial profile in the local population. There is a skew towards people over 50 participating in the study, however this is not unusual, as all the patients included have been diagnosed with coronary heart disease which manifests later in life. For the BMI variable, if we look up the BMI band ranges (checked, NHS inform site), then under 18.5 is underweight, 18.5-24.9 is healthy, 25-29.9 is overweight, 30-39.9 is obese, and 40+ is severe obesity. Considering this study is American, with participants living in the U.S. and the U.S. has an obesity epidemic, it is less surprising that the majority of the population's BMI is past the "healthy range". Additionally, if we look at a study e.g. Ades & Savage 2018, they state "Over 80% of patients with CHD are overweight or obese", and CAD is the most common type of CHD, therefore, we may naturally have a more obese population as only participants with CAD were selected.   
 
 Next, we will generate scatterplots of our continuous predictors against the outcome of interest to indicate whether or not a linear relationship is appropriate. For our cateogiral preedictors, we will use boxplots. 
 
@@ -113,13 +114,13 @@ print("Race summary:"); table(GFR_data$Black)
 ```
 **2. Test whether the variable BMIcat is contributing significantly to GFR given age, sex, and race. Report the terms in the full and reduced models, the degrees of freedom of the test, the test statistic, p-value, and your conclusions.**
 
-H0: BMIcat does not contribute significantly to GFR given age, sex, and race
-HA: BMIcat contributes significantly to GFR given age, sex, and race.
+H0: BMIcat does not contribute significantly to GFR given age, sex, and race.    
+HA: BMIcat contributes significantly to GFR given age, sex, and race.    
 
-Since we want to check whether BMIcat contributes significantly to GFR, so we leave it out in the reduced model. To handle BMIcat's 3 categories we do k-1, where k=3 for 3 categories. Therfore, 3-1, leaves us now with 2 binary coded variables for ß4 and ß5. 
+Since we want to check whether BMIcat contributes significantly to GFR, so we leave it out in the reduced model. To handle BMIcat's 3 categories we do k-1, where k=3 for 3 categories. Therfore, 3-1, leaves us now with 2 binary coded variables for ß4 and ß5.    
 
-Full model: E[BL_GFR] = ß0 + ß1(Age) + ß2(Male) + ß3(Black) + ß4(BMIcat2) + ß5(BMIcat3)
-Reduced model: E[BL_GFR] = ß0 + ß1(Age) + ß2(Male) + ß3(Black)
+Full model: E[BL_GFR] = ß0 + ß1(Age) + ß2(Male) + ß3(Black) + ß4(BMIcat2) + ß5(BMIcat3)   
+Reduced model: E[BL_GFR] = ß0 + ß1(Age) + ß2(Male) + ß3(Black)   
 
 ```{r}
 # make BMIcat a factor since it has 3 categories
@@ -161,13 +162,14 @@ While most of the residuals lie close to the diagonal, the left tail deviates aw
 
 **4. The investigator wants to know whether the association between GFR and age is being modified by race, that is, whether the association is different in blacks and non-blacks. Use appropriate modeling and conduct the corresponding tests. Show all models that you fit and clearly state your hypotheses. Report your findings.**
 
-H0: The effect of Age on GFR is the same for both racial groups (blacks vs non-blacks). ßAge:Black = 0
-HA: The effect of Age on GFR is not the same for both racial groups (blacks vs non-blacks). ßAge:Black != 0
+H0: The effect of Age on GFR is the same for both racial groups (blacks vs non-blacks). ßAge:Black = 0   
 
-Since earlier we found BMI was not an explanatory predictor, we'll continue without it. We're looking for interaction between Age and Race, therefore we'll include an interaction term in our full model, but not our reduced model. 
+HA: The effect of Age on GFR is not the same for both racial groups (blacks vs non-blacks). ßAge:Black != 0   
 
-Full model: E[BL_GFR] = ß0 + ß1(Age) + ß2(Male) + ß3(Black) + ß4(Age)(Black) 
-Reduced model: E[BL_GFR] = ß0 + ß1(Age) + ß2(Male) + ß3(Black) 
+Since earlier we found BMI was not an explanatory predictor, we'll continue without it. We're looking for interaction between Age and Race, therefore we'll include an interaction term in our full model, but not our reduced model.
+
+Full model: E[BL_GFR] = ß0 + ß1(Age) + ß2(Male) + ß3(Black) + ß4(Age)(Black)   
+Reduced model: E[BL_GFR] = ß0 + ß1(Age) + ß2(Male) + ß3(Black)   
 
 ```{r}
 # time to fit the models and run anova
