@@ -1,12 +1,12 @@
 ---
-title: "Homework-4-Q1"
+title: "Homework-5-Q1"
 output: 
   pdf_document:
     latex_engine: xelatex
 ---
 
 BIOS507 Spring 2025 | Dr Lukemire | Elizabeth Nemeti
-Due: March 17 2025
+Due: March 24 2025
 
 **Problem 1.**
 
@@ -17,150 +17,35 @@ library(ggplot2)
 library(tidyverse)
 ```
 
-Researchers collected a random sample of data on infants’ birth weights (Y , lbs), gestation period (X1, weeks), and a variable whose value is the number of the letter of the alphabet the
-baby’s last name starts with (A =1, B=2, C=3, etc). Treat X2 as a quantitative variable.
-The data set is birth_weight.txt.
+ABCD Corp is a mid-sized logistics company that prides itself on maintaining high employee satisfaction. Unfortunately, recent surveys indicate that employee job satisfaction levels vary widely depending on workload and job type. To better understand these dynamics the company has conducted a study to examine how weekly work hours influence job satisfaction for each type of employee in the company. The company has two broad categories of employees:
 
-- **Y**:  infants’ birth weights in lbs
-- **X1**: gestation period in weeks
-- **X2**: quantitative variable whose value is the number of the letter of the alphabet the baby’s last name starts with (A=1, B=2, C=3, etc)
+- **Office Workers**: Includes software developers, accountants, marketing specialists, and project managers. These roles are cognitively demanding, requiring problem-solving, meeting deadlines, and long hours of computer-based work.
+- **Manual Laborers**: Includes warehouse workers, machine operators, and delivery personnel. These employees perform physically demanding tasks such as lifting, operating machinery, and moving goods across warehouses or delivery routes.
 
-```{r}
-data_path = "/Users/elizabethnemeti/Documents/GitHub/BIOS507-Coursework/Homeworks/Homework-4/"
-data_file <- file.path(data_path, "birth_weight.txt")
-infant_data <- read.delim(data_file, header = TRUE)
+The company has collected data on number of hours worked, type of employee, and job satisfaction (0 to 100). The dataset is ABCD_job_satisfaction.csv. Note that this is simulated data for this example homework problem and does not represent a real study.
 
-head(infant_data)
-str(infant_data)
-```
-
-Now that we're doing multiple linear regression, we'll have multiple predictor variables unlike in simple linear regression where we just had one X. 
-
-predictor variable (X1) -> gestation period (weeks)
-predictor variable (X2) -> numeric code for baby’s last name initial (A=1, B=2, etc.)
-response variable (Y) -> infants’ birth weights in lbs
-
-Model -> Y = ß0 + ß1(X1) + ß2(X2) + E
-
-**1. Run a regression of Y on X1 and X2. Is the improvement due to the additional of X2 (to a model already including X1 significant? Use α = 0.05 for the test. **
+- **Y (response)**:  Job_Satisfaction
+- **X1 (predictor)**: Employee_ID
+- **X2 (predictor)**: Work_Hours
+- **X3 (predictor)**: Job_Role
 
 ```{r}
-summary(infant_data)
+data_path = "/Users/elizabethnemeti/Documents/GitHub/BIOS507-Coursework/Homeworks/Homework-5/"
+data_file <- file.path(data_path, "ABCD_job_satisfaction.csv")
+ABCD_data <- read.delim(data_file, header = TRUE)
 
-infant_data_scatterplot1 <- ggplot(
-  infant_data, 
-  aes(x = X1, y = Y)) +
-  geom_point() +
-  geom_smooth(method = "lm", color = "blue") +
-  theme_minimal() +
-  xlab("Gestation time in weeks") +
-  ylab("Birth weight in lbs")
-infant_data_scatterplot1
-
-infant_data_scatterplot2 <- ggplot(
-  infant_data, 
-  aes(x = X2, y = Y)) +
-  geom_point() +
-  geom_smooth(method = "lm", color = "lightblue") +
-  theme_minimal() +
-  xlab("Gestation time in weeks") +
-  ylab("Numeric code fo baby's last name ")
-infant_data_scatterplot2
+head(ABCD_data)
+str(ABCD_data)
 ```
-Looking at these two plots X1, the gestation weeks, gives us a clear linear relationship, but X2, the alphabet code, does not exhibit any clear relationship and probably won’t add explanatory power.
+**1. Fit a model that captures the relationship between job type and hours worked and the outcome of job satisfaction. Be sure to carry out all the usual steps (EDA, writing the model, etc). Interpret the coefficients, or, if easier, create a plot demonstrating the effects. **
 
-```{r}
-model_reduced <- lm(Y ~ X1, data = infant_data)
-summary(model_reduced)
 
-model_full <- lm(Y ~ X1 + X2, data = infant_data)
-summary(model_full)
-```
 
-```{r}
-anova(model_reduced, model_full)
-```
-H0: ß2 = 0 (aka if we have X1 already in the model, X2 does not help predict Y)
-HA: ß2 != 0 (aka if we have X1 already in the model, X2 does help predict Y)
-α = 0.05
+**2. The company asks you if there is evidence that the job satisfaction for a office worker who works 40 hours per week is different than a manual laborer who works 35 hours per week. Assess this, being sure to provide a confidence interval for the quantity that you report. **
 
-Since p = 0.6462 > 0.05 there is no evidence that X2 improves our prediction of birth weight once X1 is accounted for, therefore, we fail to reject the null hypothesis.
 
-**2. Is the previous result surprising to you? Why or why not? **
 
-Not surprising! If we first consider why someone might collect these variables in particular, it’s clear that gestation time (X1) is a meaningful predictor since it reflects a baby’s growth over time. However, the alphabet/numeric code for the baby’s last name (X2) has no intuitive connection to birth weight. It appears to rather be noise, which was indicated with the scatterplot for X2, which did not show a meaningful linear relationship.
+**3. The company asks you if there is evidence that the job satisfaction for a office worker who works 20 hours per week is different than a manual laborer who works 40 hours per week. Assess this, being sure to provide a confidence interval for the quantity that you report. **
 
-**3. Calculate the square of the partial correlations between Y and X1 given X2 (R2 Y,X1|X2 ) and between Y and X2 given X1 (R2 Y,X2|X1 ) **
 
-First, let's find our t statistics. 
-```{r}
-model_full <- lm(Y ~ X1 + X2, data = infant_data)
-summary(model_full)
-```
-X1 t-value = 8.819
-X2 t-value = -0.479
-df = 7
 
-formula: square root((t value of X1^2) / (t value of X1^2 + df))
-
-```{r}
-df <- 7
-
-# for X1, controlling for X2
-t_X1 <- 8.819
-r_X1_given_X2 <- sqrt((t_X1^2) / (t_X1^2 + df))
-r_X1_given_X2_sq <- r_X1_given_X2^2
-r_X1_given_X2_sq # the partial R^2 for X1
-
-# for X2, controlling for X1
-t_X2 <- -0.479
-r_X2_given_X1 <- sqrt((t_X2^2) / (t_X2^2 + df))
-r_X2_given_X1_sq <- r_X2_given_X1^2
-r_X2_given_X1_sq  # the partial R^2 for X2
-```
-
-Our partial R^2 for X1 is 0.9174283, where X1 explains 91.74% of the remaining variation after X2 is controlled for. Our partial R^2 for X2 is 0.03173703, where X2 explains 3.17% of the remaining variation after X1 is controlled for. This is what we would expect considering gestation weeks (X1) hold more explanatory power over a "noise" variable (X2). 
-
-**4. Run two different regression models: (a) A simple linear regression of Y onto X2 (b) A simple linear regression of X1 onto X2. Then, produce a plot of the two sets of residuals against each other (this plot will have the residuals from model (a) on the y-axis and the residuals from model (b) on the x-axis). **
-
-```{r}
-# (a) simple linear regression of Y onto X2
-model_a <- lm(Y ~ X2, data = infant_data)
-
-# (b) simple linear regression of X1 onto X2
-model_b <- lm(X1 ~ X2, data = infant_data)
-
-residuals_a <- resid(model_a) # get residuals for Y onto X2
-residuals_b <- resid(model_b) # get residuals for X1 onto X2
-residuals_data <- data.frame(residuals_a, residuals_b)
-
-ggplot(residuals_data, 
-       aes(x = residuals_b,    # (b) on the x-axis
-           y = residuals_a)) + # (a) on the y-axis
-  geom_point() + 
-  geom_smooth(method = "lm", color = "blue") +
-  theme_minimal() +
-  xlab("Residuals from regressing X1 on X2") +
-  ylab("Residuals from regressing Y on X2")
-```
-As the plot shows the relationship between Y and X1 after the influence of X2 has already been controlled for, we can infer that there is still clearly a linear relationship which is expected based on our initial analyses on whether X2 was a meaningful variable or not (it wasn't), and, our partial R^2 indicating X2 holds little explanatory power. 
-
-**5. Next, run a simple linear regression of the residuals from model (a) against the residuals from model (b) obtained above. What is the estimated slope and the R2 for this simple linear regression? Also, what regression coefficient and squared partial correlation coefficient from your work with the full model in part 1 do these quantities correspond to? Why does this connection make sense? **
-
-```{r}
-model_residuals <- lm(residuals_a ~ residuals_b, data = residuals_data)
-summary(model_residuals)
-```
-What is the estimated slope and the R2 for this simple linear regression? 
-
-slope -> 5.233e-01
-R^2 -> 0.9174
-
-What regression coefficient and squared partial correlation coefficient from your work with the full model in part 1 do these quantities correspond to? 
-
-The regression coefficient corresponds to our estimate for X1 (0.523295) in the full model. 
-The squared partial correlation coefficient corresponds to our partial R^2 for Y and X1 given X2 (0.9174283).
-
-Why does this connection make sense?
-
-By removing the effect of X2 (controlling for it using the residuals), we isolated the direct link between X1 and Y. This demonstrated that the majority of the predictive power for Y comes from X1, not X2 (which is just noise). Once we removed the influence of X2, the remaining variation in Y was explained almost entirely (~91%) by X1. Therefore, the relationship we observed between Y and X1 (with X2 being controlled for), in both the residuals plot and the full model reflects the true effect of X1 on Y, which is why the estimated slope and the R^2 from the residual regression match the coefficient and squared partial correlation from the full model. This connection is important as it confirms X1 is our true predictive variable for Y here.

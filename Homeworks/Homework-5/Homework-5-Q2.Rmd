@@ -1,0 +1,45 @@
+---
+title: "Homework-5-Q2"
+output: 
+  pdf_document:
+    latex_engine: xelatex
+---
+
+BIOS507 Spring 2025 | Dr Lukemire | Elizabeth Nemeti
+Due: March 24 2025
+
+**Problem 2.**
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+```
+
+Public health researchers are investigating how lifestyle factors like sleep duration and physical activity influence cholesterol levels, and whether this relationship differs based on dietary habits. Cholesterol levels are a key indicator of cardiovascular health, with high levels increasing the risk of heart disease. 
+
+The study categorizes participants into three dietary patterns: **Plant-Based Diets, Balanced Diets, and High-Meat Diet**. The hypothesis is that increased sleep and physical activity are generally associated with lower cholesterol levels, but the magnitude of these effects differs based on dietary habits, with plant-based eaters potentially benefiting more due to better metabolic profiles, while high-meat consumers may show a weaker response. 
+
+The dataset is diet_sleep_exercise_cholesterol.csv. Note that this is simulated data for this example homework problem and does not represent a real study.
+
+- **Y (response)**:  cholesterol (high levels increasing the risk of heart disease)
+- **X1 (predictor)**: sleepHours (sleep duration)
+- **X2 (predictor)**: activity (physical activity)
+- **X3 (predictor)**: diet (three dietary patterns: High-Meat; Plant-Based; Balanced)
+
+```{r}
+data_path = "/Users/elizabethnemeti/Documents/GitHub/BIOS507-Coursework/Homeworks/Homework-5/"
+data_file <- file.path(data_path, "diet_sleep_exercise_cholesterol.csv")
+health_data <- read.delim(data_file, header = TRUE)
+
+head(health_data)
+str(health_data)
+```
+**1. a. Fit a model (Model 1) that includes all main effects and two-factor interactions. b.Conduct a test for the presence of the sleep duration × physical activity interaction. c. Conduct a test for the presence of the diet × physical activity interaction. **
+
+
+
+**2. d. Fit a model (Model 2) that includes all main effects, but only the diet × physical activity interaction. e. Create a conditional effects plot based on this model that demonstrates the interaction between physical activity and diet on cholesterol. f. Be sure to provide a written description of the pattern that you observe. **
+
+
