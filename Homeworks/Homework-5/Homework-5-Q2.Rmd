@@ -23,7 +23,7 @@ The study categorizes participants into three dietary patterns: **Plant-Based Di
 
 The dataset is diet_sleep_exercise_cholesterol.csv. Note that this is simulated data for this example homework problem and does not represent a real study.
 
-- **Y (response)**:  cholesterol (high levels increasing the risk of heart disease)
+- **Y (response)**:   cholesterol (high levels increasing the risk of heart disease)
 - **X1 (predictor)**: sleepHours (sleep duration)
 - **X2 (predictor)**: activity (physical activity)
 - **X3 (predictor)**: diet (three dietary patterns: High-Meat; Plant-Based; Balanced)
@@ -31,15 +31,64 @@ The dataset is diet_sleep_exercise_cholesterol.csv. Note that this is simulated 
 ```{r}
 data_path = "/Users/elizabethnemeti/Documents/GitHub/BIOS507-Coursework/Homeworks/Homework-5/"
 data_file <- file.path(data_path, "diet_sleep_exercise_cholesterol.csv")
-health_data <- read.delim(data_file, header = TRUE)
+health_data <- read.csv(data_file, header = TRUE)
 
 head(health_data)
 str(health_data)
 ```
-**1. a. Fit a model (Model 1) that includes all main effects and two-factor interactions. b.Conduct a test for the presence of the sleep duration × physical activity interaction. c. Conduct a test for the presence of the diet × physical activity interaction. **
+**1. Fit a model (Model 1) that includes all main effects and two-factor interactions. Conduct a test for the presence of the sleep duration × physical activity interaction. Conduct a test for the presence of the diet × physical activity interaction. **
 
+```{r}
+health_data$diet <- as.factor(health_data$diet)
 
+health_model <- lm(cholesterol ~ sleepHours * activity * diet, data = health_data)
+summary(health_model)
+```
 
-**2. d. Fit a model (Model 2) that includes all main effects, but only the diet × physical activity interaction. e. Create a conditional effects plot based on this model that demonstrates the interaction between physical activity and diet on cholesterol. f. Be sure to provide a written description of the pattern that you observe. **
+**Conduct a test for the presence of the sleep duration × physical activity interaction.**
+Full model: E[cholesterol] = ß0 + ß1(sleepHours) + ß2(activity) + ß3(diet) + ß4(sleepHours)(activity) + ß5(diet)(activity) + ß6(sleepHours)(diet)
 
+Reduced model: E[cholesterol] = ß0 + ß1(sleepHours) + ß2(activity) + ß3(diet) + ß5(diet)(activity) + ß6(sleepHours)(diet)
 
+```{r}
+full_model_a <- lm(cholesterol ~ sleepHours + activity + diet + sleepHours:activity + diet:activity + sleepHours:diet, data = health_data)
+reduced_model_a <- lm(cholesterol ~ sleepHours + activity + diet + diet:activity + sleepHours:diet, data = health_data)
+
+anova_result_a <- anova(reduced_model_a, full_model_a)
+print(anova_result_a)
+```
+**Conduct a test for the presence of the diet × physical activity interaction.**
+Full model: E[cholesterol] = ß0 + ß1(sleepHours) + ß2(activity) + ß3(diet) + ß4(sleepHours)(activity) + ß5(diet)(activity) + ß6(sleepHours)(diet)
+
+Reduced model: E[cholesterol] = ß0 + ß1(sleepHours) + ß2(activity) + ß3(diet) + ß4(sleepHours)(activity) + ß6(sleepHours)(diet)
+
+```{r}
+full_model_b <- lm(cholesterol ~ sleepHours + activity + diet + sleepHours:activity + diet:activity + sleepHours:diet, data = health_data)
+reduced_model_b <- lm(cholesterol ~ sleepHours + activity + diet + sleepHours:activity + sleepHours:diet, data = health_data)
+
+anova_result_b <- anova(reduced_model_b, full_model_b)
+print(anova_result_b)
+```
+**2. Fit a model (Model 2) that includes all main effects, but only the diet × physical activity interaction. Create a conditional effects plot based on this model that demonstrates the interaction between physical activity and diet on cholesterol. Be sure to provide a written description of the pattern that you observe. **
+
+```{r}
+# just the diet × physical activity interaction
+model_2 <- lm(cholesterol ~ sleepHours + activity + diet + diet:activity, data = health_data)
+
+model_2_preds <- predict(model_2, newdata = health_data) # getting cholesterol predictions
+
+# create new df for plotting, so we can better group by diet
+ggplot_df <- data.frame(
+  activity = health_data$activity,
+  diet = health_data$diet,
+  predicted_cholesterol = model_2_preds
+)
+
+ggplot(ggplot_df, aes(x = activity, y = predicted_cholesterol, color = diet)) +
+  geom_line(size = 0.5) +
+  labs(x = "Physical Activity",
+       y = "Predicted Cholesterol (Y)",
+       color = "Diet Type") +
+  theme_minimal()
+```
+In the above plot, we can distinguish three distinct slopes for each of the 3 diet types: balanced, high-meat, and plant-based. This pattern indicates a significant interaction between diet and physical activity. The plant-based diet (blue slope) shows the steepest decline in predicted cholesterol levels as physical activity increases, suggesting that physical activity has the strongest effect on cholesterol reduction for those following a plant-based diet. In contrast, individuals following a high-meat diet (green slope) or balanced diet (orange slope) experience a weaker effect of physical activity on cholesterol reduction, as their slopes decline less sharply. All three slopes show fluctuations, which could be expected in a system as complex as cholesterol regulation. The intercept for the high-meat diet is the highest, suggesting that at zero physical activity, individuals on a high-meat diet are predicted to have the highest cholesterol levels of the three diets. Conversely, the plant-based diet starts with the lowest predicted cholesterol at zero physical activity, suggesting it may contribute to a better metabolic profile. 

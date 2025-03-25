@@ -15,6 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(ggplot2)
 library(tidyverse)
+library(patchwork)
 ```
 
 ABCD Corp is a mid-sized logistics company that prides itself on maintaining high employee satisfaction. Unfortunately, recent surveys indicate that employee job satisfaction levels vary widely depending on workload and job type. To better understand these dynamics the company has conducted a study to examine how weekly work hours influence job satisfaction for each type of employee in the company. The company has two broad categories of employees:
@@ -22,30 +23,129 @@ ABCD Corp is a mid-sized logistics company that prides itself on maintaining hig
 - **Office Workers**: Includes software developers, accountants, marketing specialists, and project managers. These roles are cognitively demanding, requiring problem-solving, meeting deadlines, and long hours of computer-based work.
 - **Manual Laborers**: Includes warehouse workers, machine operators, and delivery personnel. These employees perform physically demanding tasks such as lifting, operating machinery, and moving goods across warehouses or delivery routes.
 
-The company has collected data on number of hours worked, type of employee, and job satisfaction (0 to 100). The dataset is ABCD_job_satisfaction.csv. Note that this is simulated data for this example homework problem and does not represent a real study.
+The company has collected data on number of hours worked, type of employee, and job satisfaction (0 to 100). The data set is ABCD_job_satisfaction.csv. Note that this is simulated data for this example homework problem and does not represent a real study.
 
-- **Y (response)**:  Job_Satisfaction
-- **X1 (predictor)**: Employee_ID
-- **X2 (predictor)**: Work_Hours
-- **X3 (predictor)**: Job_Role
+- **Y (response)**:  Job_Satisfaction (satisfaction score, categorical)
+- **X1 (identifier)**: Employee_ID (just a unique ID, not a predictor)
+- **X2 (predictor)**: Work_Hours (hours worked, continuous)
+- **X3 (predictor)**: Job_Role (either Manual Laborer or Office Worker, categorical)
 
 ```{r}
 data_path = "/Users/elizabethnemeti/Documents/GitHub/BIOS507-Coursework/Homeworks/Homework-5/"
 data_file <- file.path(data_path, "ABCD_job_satisfaction.csv")
-ABCD_data <- read.delim(data_file, header = TRUE)
+ABCD_data <- read.csv(data_file, header = TRUE)
 
 head(ABCD_data)
 str(ABCD_data)
 ```
 **1. Fit a model that captures the relationship between job type and hours worked and the outcome of job satisfaction. Be sure to carry out all the usual steps (EDA, writing the model, etc). Interpret the coefficients, or, if easier, create a plot demonstrating the effects. **
 
+First, we will plot the variables of interest to check for anomalies. We have 1 continuous predictor variable (Work_Hours), and a continuous response variable (Job_Satisfaction) for which we will use a histogram, and we have 1 categorical variable (Job_Role) for which we would rather use a bar chart. 
+
+```{r}
+workhours_histogram <- ABCD_data %>%
+  ggplot(aes(x = Work_Hours)) +
+  geom_histogram(bins = 15, color = "black", fill = "plum1") +
+  theme_minimal()
+
+jobsatisfaction_histogram <- ABCD_data %>%
+  ggplot(aes(x = Job_Satisfaction)) +
+  geom_histogram(bins = 15, color = "black", fill = "plum3") +
+  theme_minimal()
+
+jobrole_barchart <- ABCD_data %>%
+  ggplot(aes(x = factor(Job_Role))) +
+  geom_bar(color = "black", fill = "plum4") +
+  theme_minimal()
+
+workhours_histogram + jobsatisfaction_histogram + jobrole_barchart
+```
+```{r}
+summary(ABCD_data$Work_Hours)
+summary(ABCD_data$Job_Satisfaction)
+```
+At first glance, the data appears free of anomalies. The distribution of job roles is nearly balanced, with a similar number of Manual Laborers and Office Workers. This balanced representation allows us to make insights into both job roles without significant bias due to overrepresentation of one group. The recorded work hours range from 13 hours/week to 75 hours/week, with an average of ~45 hours/week. This average appears standard for the U.S., where a 40-hour work week is quite often exceeded. The data set does not disclose whether these higher work hours include overtime compensation. This could be a factor that while not included, significantly contributes to lower job satisfaction. The data also does not specify whether the <20 hours/week reports, are from part-time workers - which could skew perceptions of job satisfaction compared to full time workers - or admittance to "slacking off"/having no work to do. If we knew the conditions of the population reporting <20 hours/week, this could provide clearer insight on this key variable. Another factor worth considering is the geographical/cultural context of the company, which the data has not informed us of. For example, countries that emphasize a work-life balance, such as Spain or Italy, where their collectivist culture and structured break times for family and community are standard, may have much poorer job satisfaction scores with work weeks leading all the way up to 75 hours, compared to individualist cultures e.g. U.S., Japan. The job satisfaction scores range from 0-67, with an average of ~34, and most scores falling below 40, which is concerningly low for a company that prides itself on high employee satisfaction. This could suggest previous assessments were inflated for appearance, assessments were conducted too long ago to reflect the current population well, or the current survey variables do not account for critical variables contributing to job satisfaction, such as salary, employer benefits, insurance, or childcare coverage. Finally, with reports even at 0 for satisfaction, this indicates a need for a more comprehensive survey to capture employee satisfaction more meaningfully. 
+
+Next, we will generate scatterplots of our continuous predictor against the outcome of interest to indicate whether or not a linear relationship is appropriate. For our categorical predictor, we will use a box plot. 
+
+```{r}
+satisfaction_workhours_scatter <- ABCD_data %>%
+  ggplot(aes(x = Work_Hours, y = Job_Satisfaction)) +
+  geom_point(color = "plum1") +
+  geom_smooth(method = "lm", color = "violetred") +
+  theme_minimal()
+
+satisfaction_jobrole <- ABCD_data %>%
+  ggplot(aes(x = factor(Job_Role), y = Job_Satisfaction)) +
+  geom_boxplot(color = "black", fill = "plum4") +
+  theme_minimal()
+
+satisfaction_workhours_scatter + satisfaction_jobrole
+```
+The scatterplot indicates a clear linear relationship between Work Hours and Job Satisfaction, where Job Satisfaction sharply decreases as Work Hours increase. While the downward trend is strong, the spread across the y axis again suggests other factors beyond work hours may likely contribute to job satisfaction.The boxplot indicates that Office Workers generally have lower Job Satisfaction compared to Manual Laborers. Nonetheless, both job roles have relatively low overall Job Satisfaction scores. There are some outliers in both groups falling closer to 60, indicating that there are some individuals with some satisfaction in their role at ABCD. 
+
+Our hypotheses are:
+H0: The effect of Work Hours on Job Satisfaction is the same for both Job Roles (Manual Laborer vs Office Worker). ßWork_Hours:Job_Role = 0
+HA: The effect of Work Hours on Job Satisfaction differs between Job Roles (Manual Laborer vs Office Worker). ßWork_Hours:Job_Role != 0 
+
+Our written models are:
+Full model: E[Job_Satisfaction] = ß0 + ß1(Work_Hours) + ß2(Job_Role) + ß3(Work_Hours*Job_Role)
+Reduced model: E[Job_Satisfaction] = ß0 + ß1(Work_Hours) + ß2(Job_Role)
+
+```{r}
+# time to fit the models and run anova
+full_model <- lm(Job_Satisfaction ~ Work_Hours + Job_Role + Work_Hours:Job_Role, data = ABCD_data)
+reduced_model <- lm(Job_Satisfaction ~ Work_Hours + Job_Role, data = ABCD_data)
+
+anova <- anova(reduced_model, full_model)
+print(anova)
+summary(full_model)
+```
+The p-value for the interaction term is <2.2e-16. Therefore there is strong evidence that the effect of Work Hours on Job Satisfaction differs depending on the Job Role (Manual Laborer vs Office Worker). Therefore, we reject H0 at a(alpha) = 0.05. The numerator df (df1) is 1. It's calculated as the difference between the residual df of the reduced model (497) and the full model (496). The df1 being 1 is because the full model has one additional parameter (the interaction term between Work_Hours and Job_Role) compared to the reduced model. The F-statistic is 85.903, indicating that including the interaction term in the model provides great improvement in model fit, relative to the unexplained variance.Therefore, the effect of Work Hours on Job Satisfaction does differ by Job Role. 
+
+To interpret the coefficients next, the intercept (ß0) is 74.43553. While no one is working 0 hours/week, ß0 represents the baseline Job Satisfaction score for a Manual Laborer (our reference group). In contrast, the baseline satisfaction score at 0 hours/week for Office Workers would be: 74.43553 + (-3.91015) = 70.52538. This indicates Office Workers being typically less satisfied than Manual Laborers, before even observing hours worked. The coefficient for Work_Hours (ß1) is -0.69, meaning that for Manual Laborers, Job Satisfaction decreases by approx. 0.69 points per hour worked. The interaction term's coefficient is -0.42, therefore Office workers' Job Satisfaction score decreases additionally by 0.42048 per hour worked than Manual Laborers, hence the effect of Work Hours on Job Satisfaction is even greater. Specifically, Office Workers' score decreases by 1.11, (-0.69 + (-0.42) = -1.11) per hour worked. This -ve effect is highly significant as the p-value < 2e-16. Below, we have a plot to visualize this -ve effect across Job Roles. Our interpretation of the coefficients aligns with the downward trend of Job Satisfaction decreasing as Work Hours increases in both Job Roles.
+
+```{r}
+ggplot(ABCD_data, aes(x = Work_Hours, 
+                      y = Job_Satisfaction, 
+                      color = Job_Role)) +
+  geom_point(alpha = 0.8) + 
+  geom_smooth(method = "lm") +
+  labs(
+    x = "Work_Hours",
+    y = "Job_Satisfaction",
+    color = "Job_Role") +
+  theme_minimal()
+```
+
+**2. The company asks you if there is evidence that the job satisfaction for an office worker who works 40 hours per week is different than a manual laborer who works 35 hours per week. Assess this, being sure to provide a confidence interval for the quantity that you report. ** 
+
+We need to do 3 steps: get predicted scores (aka point estimates) from the model for an office worker who works 40 hours per week, and a manual laborer who works 35 hours per week. Then, we need to find the SE of the difference between then. Finally, we can find the CI for the difference in predictions. 
+
+prediction = ß0 + (Hours Worked * Work Hours Effect for Manual Laborers) 
+prediction = 74.43553 + (35*(-0.69275) 
+prediction = 50.18928
+If a Manual Laborer works 35 hours/week, their predicted Job Satisfaction will be approx. 50.19. 
 
 
-**2. The company asks you if there is evidence that the job satisfaction for a office worker who works 40 hours per week is different than a manual laborer who works 35 hours per week. Assess this, being sure to provide a confidence interval for the quantity that you report. **
+prediction = ß0 + Job Role Effect for Office Worker + (Hours Worked*Work Hours Effect for Office Workers) + (Hours Worked*Interaction Term)
+prediction = ß0 + ß2 + (40*ß1) + (40*ß3)
+prediction = 74.43553 + (-3.91015) + (40 * (-0.69275)) + (40 * (-0.42048))
+prediction = 25.99618
+If an Office Worker works 40 hours/week, their predicted Job Satisfaction will be approx. 25.99618.
 
+```{r}
+# SE for Manual Laborer for 35 hours
+n <- nrow(ABCD_data)
+mean_hours <- mean(ABCD_data$Work_Hours)
+SS <- sum((ABCD_data$Work_Hours - mean_hours)^2)
 
+residual_se <- summary(full_model)$sigma
 
-**3. The company asks you if there is evidence that the job satisfaction for a office worker who works 20 hours per week is different than a manual laborer who works 40 hours per week. Assess this, being sure to provide a confidence interval for the quantity that you report. **
+SE_manual_laborer <- residual_se * sqrt((1/n) + ((35 - mean_hours)^2 / SS))
+SE_manual_laborer
 
+```
 
+**3. The company asks you if there is evidence that the job satisfaction for an office worker who works 20 hours per week is different than a manual laborer who works 40 hours per week. Assess this, being sure to provide a confidence interval for the quantity that you report. ** 
 

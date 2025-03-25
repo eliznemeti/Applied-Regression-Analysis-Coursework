@@ -73,7 +73,7 @@ age_histogram + bmi_histogram + sex_barchart + race_barchart
 
 At first glance, the data appears to not have any outliers. To be noted as a potential bias down the line, there is some under-representation in the cohort, with fewer females and fewer black participants included in the study. This could be for various reasons e.g. more men getting diagnose with CAD, or the study taking place in a region with a less diverse racial profile in the local population. There is a skew towards people over 50 participating in the study, however this is not unusual, as all the patients included have been diagnosed with coronary heart disease which manifests later in life. For the BMI variable, if we look up the BMI band ranges (checked, NHS inform site), then under 18.5 is underweight, 18.5-24.9 is healthy, 25-29.9 is overweight, 30-39.9 is obese, and 40+ is severe obesity. Considering this study is American, with participants living in the U.S. and the U.S. has an obesity epidemic, it is less surprising that the majority of the population's BMI is past the "healthy range". Additionally, if we look at a study e.g. Ades & Savage 2018, they state "Over 80% of patients with CHD are overweight or obese", and CAD is the most common type of CHD, therefore, we may naturally have a more obese population as only participants with CAD were selected.   
 
-Next, we will generate scatterplots of our continuous predictors against the outcome of interest to indicate whether or not a linear relationship is appropriate. For our cateogiral preedictors, we will use boxplots. 
+Next, we will generate scatterplots of our continuous predictors against the outcome of interest to indicate whether or not a linear relationship is appropriate. For our categorical predictors, we will use box plots. 
 
 ```{r}
 GFR_age_scatter <- GFR_data %>%
@@ -117,7 +117,7 @@ print("Race summary:"); table(GFR_data$Black)
 H0: BMIcat does not contribute significantly to GFR given age, sex, and race.    
 HA: BMIcat contributes significantly to GFR given age, sex, and race.    
 
-Since we want to check whether BMIcat contributes significantly to GFR, so we leave it out in the reduced model. To handle BMIcat's 3 categories we do k-1, where k=3 for 3 categories. Therfore, 3-1, leaves us now with 2 binary coded variables for ß4 and ß5.    
+Since we want to check whether BMIcat contributes significantly to GFR, so we leave it out in the reduced model. To handle BMIcat's 3 categories we do k-1, where k=3 for 3 categories. Therefore, 3-1, leaves us now with 2 binary coded variables for ß4 and ß5.    
 
 Full model: E[BL_GFR] = ß0 + ß1(Age) + ß2(Male) + ß3(Black) + ß4(BMIcat2) + ß5(BMIcat3)   
 Reduced model: E[BL_GFR] = ß0 + ß1(Age) + ß2(Male) + ß3(Black)   
