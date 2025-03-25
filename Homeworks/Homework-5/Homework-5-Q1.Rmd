@@ -64,6 +64,7 @@ workhours_histogram + jobsatisfaction_histogram + jobrole_barchart
 summary(ABCD_data$Work_Hours)
 summary(ABCD_data$Job_Satisfaction)
 ```
+
 At first glance, the data appears free of anomalies. The distribution of job roles is nearly balanced, with a similar number of Manual Laborers and Office Workers. This balanced representation allows us to make insights into both job roles without significant bias due to overrepresentation of one group. The recorded work hours range from 13 hours/week to 75 hours/week, with an average of ~45 hours/week. This average appears standard for the U.S., where a 40-hour work week is quite often exceeded. The data set does not disclose whether these higher work hours include overtime compensation. This could be a factor that while not included, significantly contributes to lower job satisfaction. The data also does not specify whether the <20 hours/week reports, are from part-time workers - which could skew perceptions of job satisfaction compared to full time workers - or admittance to "slacking off"/having no work to do. If we knew the conditions of the population reporting <20 hours/week, this could provide clearer insight on this key variable. Another factor worth considering is the geographical/cultural context of the company, which the data has not informed us of. For example, countries that emphasize a work-life balance, such as Spain or Italy, where their collectivist culture and structured break times for family and community are standard, may have much poorer job satisfaction scores with work weeks leading all the way up to 75 hours, compared to individualist cultures e.g. U.S., Japan. The job satisfaction scores range from 0-67, with an average of ~34, and most scores falling below 40, which is concerningly low for a company that prides itself on high employee satisfaction. This could suggest previous assessments were inflated for appearance, assessments were conducted too long ago to reflect the current population well, or the current survey variables do not account for critical variables contributing to job satisfaction, such as salary, employer benefits, insurance, or childcare coverage. Finally, with reports even at 0 for satisfaction, this indicates a need for a more comprehensive survey to capture employee satisfaction more meaningfully. 
 
 Next, we will generate scatterplots of our continuous predictor against the outcome of interest to indicate whether or not a linear relationship is appropriate. For our categorical predictor, we will use a box plot. 
@@ -82,15 +83,18 @@ satisfaction_jobrole <- ABCD_data %>%
 
 satisfaction_workhours_scatter + satisfaction_jobrole
 ```
+
 The scatterplot indicates a clear linear relationship between Work Hours and Job Satisfaction, where Job Satisfaction sharply decreases as Work Hours increase. While the downward trend is strong, the spread across the y axis again suggests other factors beyond work hours may likely contribute to job satisfaction.The boxplot indicates that Office Workers generally have lower Job Satisfaction compared to Manual Laborers. Nonetheless, both job roles have relatively low overall Job Satisfaction scores. There are some outliers in both groups falling closer to 60, indicating that there are some individuals with some satisfaction in their role at ABCD. 
 
 Our hypotheses are:
-H0: The effect of Work Hours on Job Satisfaction is the same for both Job Roles (Manual Laborer vs Office Worker). ßWork_Hours:Job_Role = 0
-HA: The effect of Work Hours on Job Satisfaction differs between Job Roles (Manual Laborer vs Office Worker). ßWork_Hours:Job_Role != 0 
+
+- H0: The effect of Work Hours on Job Satisfaction is the same for both Job Roles (Manual Laborer vs Office Worker). ßWork_Hours:Job_Role = 0
+- HA: The effect of Work Hours on Job Satisfaction differs between Job Roles (Manual Laborer vs Office Worker). ßWork_Hours:Job_Role != 0 
 
 Our written models are:
-Full model: E[Job_Satisfaction] = ß0 + ß1(Work_Hours) + ß2(Job_Role) + ß3(Work_Hours*Job_Role)
-Reduced model: E[Job_Satisfaction] = ß0 + ß1(Work_Hours) + ß2(Job_Role)
+
+- Full model: E[Job_Satisfaction] = ß0 + ß1(Work_Hours) + ß2(Job_Role) + ß3(Work_HoursxJob_Role)
+- Reduced model: E[Job_Satisfaction] = ß0 + ß1(Work_Hours) + ß2(Job_Role)
 
 ```{r}
 # time to fit the models and run anova
@@ -101,6 +105,7 @@ anova <- anova(reduced_model, full_model)
 print(anova)
 summary(full_model)
 ```
+
 The p-value for the interaction term is <2.2e-16. Therefore there is strong evidence that the effect of Work Hours on Job Satisfaction differs depending on the Job Role (Manual Laborer vs Office Worker). Therefore, we reject H0 at a(alpha) = 0.05. The numerator df (df1) is 1. It's calculated as the difference between the residual df of the reduced model (497) and the full model (496). The df1 being 1 is because the full model has one additional parameter (the interaction term between Work_Hours and Job_Role) compared to the reduced model. The F-statistic is 85.903, indicating that including the interaction term in the model provides great improvement in model fit, relative to the unexplained variance.Therefore, the effect of Work Hours on Job Satisfaction does differ by Job Role. 
 
 To interpret the coefficients next, the intercept (ß0) is 74.43553. While no one is working 0 hours/week, ß0 represents the baseline Job Satisfaction score for a Manual Laborer (our reference group). In contrast, the baseline satisfaction score at 0 hours/week for Office Workers would be: 74.43553 + (-3.91015) = 70.52538. This indicates Office Workers being typically less satisfied than Manual Laborers, before even observing hours worked. The coefficient for Work_Hours (ß1) is -0.69, meaning that for Manual Laborers, Job Satisfaction decreases by approx. 0.69 points per hour worked. The interaction term's coefficient is -0.42, therefore Office workers' Job Satisfaction score decreases additionally by 0.42048 per hour worked than Manual Laborers, hence the effect of Work Hours on Job Satisfaction is even greater. Specifically, Office Workers' score decreases by 1.11, (-0.69 + (-0.42) = -1.11) per hour worked. This -ve effect is highly significant as the p-value < 2e-16. Below, we have a plot to visualize this -ve effect across Job Roles. Our interpretation of the coefficients aligns with the downward trend of Job Satisfaction decreasing as Work Hours increases in both Job Roles.
@@ -120,32 +125,136 @@ ggplot(ABCD_data, aes(x = Work_Hours,
 
 **2. The company asks you if there is evidence that the job satisfaction for an office worker who works 40 hours per week is different than a manual laborer who works 35 hours per week. Assess this, being sure to provide a confidence interval for the quantity that you report. ** 
 
-We need to do 3 steps: get predicted scores (aka point estimates) from the model for an office worker who works 40 hours per week, and a manual laborer who works 35 hours per week. Then, we need to find the SE of the difference between then. Finally, we can find the CI for the difference in predictions. 
+First, let's check the Job Satisfaction of a Manual Laborer working 35 hours/week:
 
-prediction = ß0 + (Hours Worked * Work Hours Effect for Manual Laborers) 
-prediction = 74.43553 + (35*(-0.69275) 
-prediction = 50.18928
-If a Manual Laborer works 35 hours/week, their predicted Job Satisfaction will be approx. 50.19. 
+- prediction = ß0 + (Hours Worked x Work Hours Effect for Manual Laborers) 
+- prediction = 74.43553 + (35)(-0.69275) 
+- prediction = 50.18928
+- If a Manual Laborer works 35 hours/week, their predicted Job Satisfaction will be approx. 50.19. 
 
+Next, let's check the Job Satisfaction of an Office Worker working 40 hours/week:
 
-prediction = ß0 + Job Role Effect for Office Worker + (Hours Worked*Work Hours Effect for Office Workers) + (Hours Worked*Interaction Term)
-prediction = ß0 + ß2 + (40*ß1) + (40*ß3)
-prediction = 74.43553 + (-3.91015) + (40 * (-0.69275)) + (40 * (-0.42048))
-prediction = 25.99618
-If an Office Worker works 40 hours/week, their predicted Job Satisfaction will be approx. 25.99618.
+- prediction = ß0 + (Job Role Effect for Office Worker) + (Hours Worked x Work Hours Effect for Office Workers) + (Hours Worked x Interaction Term)
+- prediction = ß0 + ß2 + (40 x ß1) + (40 x ß3)
+- prediction = 74.43553 + (-3.91015) + (40)(-0.69275) + (40)(-0.42048))
+- prediction = 25.99618
+- If an Office Worker works 40 hours/week, their predicted Job Satisfaction will be approx. 25.99618.
+
+Now, let's assess the difference between the two predictions:
+
+For Manual Laborer at 35 hours/week:
+
+- Intercept: 1
+- Work_Hours: 35
+- Job_Role: 0, since it's the reference category
+- Interaction: (Work_Hours × Job_Role) = 35 × 0 = 0
+
+For Office Worker at 40 hours/week:
+
+- Intercept: 1
+- Work_Hours: 40
+- Job_Role: 1, since it's NOT the reference category
+- Interaction: (Work_Hours × Job_Role) = 40 × 1 = 40
+
+Difference:
+
+- Intercept: 1 - 1 = 0
+- Work Hours: 40 - 35 = 5
+- Job Role: Office Worker - Manual Laborer = 1 - 0 = 1
+- Interaction Term: 40 - 0 = 40
 
 ```{r}
-# SE for Manual Laborer for 35 hours
-n <- nrow(ABCD_data)
-mean_hours <- mean(ABCD_data$Work_Hours)
-SS <- sum((ABCD_data$Work_Hours - mean_hours)^2)
+difference <- c(0, 5, 1, 40) # plug in our values (matching the order of coefs: Intercept, Work_Hours, Job_Role, Interaction)
 
-residual_se <- summary(full_model)$sigma
+coefs <- coef(full_model) # get our coefs from the full model
 
-SE_manual_laborer <- residual_se * sqrt((1/n) + ((35 - mean_hours)^2 / SS))
-SE_manual_laborer
+point_estimate <- sum(coefs * difference)
+point_estimate #-24.19302
 
+vcov_matrix <- vcov(full_model) # get our variance covariance matrix of the coefs
+vcov_matrix
+
+# now we need to get the SE for our CI later
+SE_difference <- sqrt(t(difference) %*% vcov_matrix %*% difference) # matrix multiplication here 
+SE_difference # 0.5811299
+
+# time to get the CI at 95% (specified by prof.)
+#remember, 0.025 in lower tail, 0.025 in upper tail so, 0.975 for 95%
+crit_t_val <- qt(0.975, df = df.residual(full_model)) # 0.5811299
+crit_t_val
+
+CI_lower <- point_estimate - (crit_t_val * SE_difference) 
+CI_lower # -25.3348
+CI_upper <- point_estimate + (crit_t_val * SE_difference)
+CI_upper # -23.05124
 ```
+
+We calculated that a) a Manual Laborer working 35 hours/week, has a predicted Job Satisfaction of approx. 50.19 b) an Office Worker working 40 hours/week has a predicted Job Satisfaction of approx. 25.99618. The difference in predicted job satisfaction between these groups is -24.19302, indicating that Office Workers working 40 hours/week have lower job satisfaction compared to Manual Laborers working 35 hours/week, by approx. 24.19 points. We constructed a 95% CI which is: (-25.3348,-23.05124), where this is the range of plausible values for the true difference in job satisfaction between the job roles. Since the CI does not contain 0, we can reject the H0 that there is no difference in job satisfaction for an office worker who works 40 hours/week and a manual laborer who works 35 hours/week. 
+
+- (Note: The problem's wording didn't specify if the company had an H0 or HA specifically in mind when asking for this assessment. However, if the company's hypothesis was that there is no difference in job satisfaction between the job roles, then we would be rejecting it.)
 
 **3. The company asks you if there is evidence that the job satisfaction for an office worker who works 20 hours per week is different than a manual laborer who works 40 hours per week. Assess this, being sure to provide a confidence interval for the quantity that you report. ** 
 
+First, let's check the Job Satisfaction of a Manual Laborer working 40 hours/week:
+
+- prediction = ß0 + (Hours Worked x Work Hours Effect for Manual Laborers) 
+- prediction = 74.43553 + (40)(-0.69275) 
+- prediction = 46.72553
+- If a Manual Laborer works 40 hours/week, their predicted Job Satisfaction will be approx. 46.72. 
+
+Next, let's check the Job Satisfaction of an Office Worker working 20 hours/week:
+
+- prediction = ß0 + Job Role Effect for Office Worker + (Hours Worked x Work Hours Effect for Office Workers) + (Hours Worked x Interaction Term)
+- prediction = ß0 + ß2 + (20 x ß1) + (20 x ß3)
+- prediction = 74.43553 + (-3.91015) + (20)(-0.69275)) + (20)(-0.42048))
+- prediction = 48.26078
+- If an Office Worker works 40 hours/week, their predicted Job Satisfaction will be approx. 48.26.
+
+Now, let's assess the difference between the two predictions:
+
+For Manual Laborer at 40 hours/week:
+
+- Intercept: 1
+- Work_Hours: 40
+- Job_Role: 0, since it's the reference category
+- Interaction: (Work_Hours × Job_Role) = 40 × 0 = 0
+
+For Office Worker at 20 hours/week:
+
+- Intercept: 1
+- Work_Hours: 20
+- Job_Role: 1, since it's NOT the reference category
+- Interaction: (Work_Hours × Job_Role) = 20 × 1 = 20
+
+Difference:
+
+- Intercept: 1 - 1 = 0
+- Work Hours: 20 - 40 = -20
+- Job Role: Office Worker - Manual Laborer = 1 - 0 = 1
+- Interaction Term: 20 - 0 = 20
+
+```{r}
+difference <- c(0, -20, 1, 20) # plug in our values again
+
+coefs <- coef(full_model)
+
+point_estimate <- sum(coefs * difference) # new point estimate
+point_estimate #1.535204
+
+vcov_matrix <- vcov(full_model) 
+vcov_matrix
+
+# get SE again for our CI
+SE_difference <- sqrt(t(difference) %*% vcov_matrix %*% difference)
+SE_difference # 0.9111892
+
+# time to get the CI at 95% (specified by prof.)
+crit_t_val <- qt(0.975, df = df.residual(full_model)) # 1.964758
+crit_t_val
+
+CI_lower <- point_estimate - (crit_t_val * SE_difference)
+CI_lower # -0.2550625
+CI_upper <- point_estimate + (crit_t_val * SE_difference)
+CI_upper # 3.32547
+```
+We calculated that a) a Manual Laborer working 40 hours/week, has a predicted Job Satisfaction of approx. 46.72 b) an Office Worker working 20 hours/week has a predicted Job Satisfaction of approx. 48.26. The difference in predicted job satisfaction between job roles is 1.535204, indicating that Manual Laborers working 40 hours/week have lower job satisfaction compared to Office Workers working 20 hours/week, by approx. 1.54 points. We constructed a 95% CI which is: (-0.2550625, 3.32547), where this is the range of plausible values for the true difference in job satisfaction between the job roles. Since the CI contains 0, we fail to reject the H0 that there is no difference in job satisfaction for an office worker who works 20 hours/week and a manual laborer who works 40 hours/week. Since the true difference could be 0, their job satisfaction may be the same. 
