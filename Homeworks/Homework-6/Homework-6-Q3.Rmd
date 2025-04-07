@@ -1,0 +1,46 @@
+---
+title: "Homework-6-Q3"
+output: 
+  pdf_document:
+    latex_engine: xelatex
+---
+
+BIOS507 Spring 2025 | Dr Lukemire | Elizabeth Nemeti
+Due: April 7 2025
+
+**Problem 3.**
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(patchwork)
+```
+
+In a previous homework, you analyzed a random sample of data on infants’ birth weights (Y , lbs) and gestation period (X1, weeks). I’ve uploaded a new version of this data to canvas called birth weight expanded.csv. There are 4 variables in this data set:
+
+- SNAP Score for Neonatal Acute Physiology, a continuous measure of illness severity. Higher scores indicate more severe illness.
+- birthweight Birth weight in pounds
+- gestation period gestational age at birth, in weeks
+- sex whether the infant is male or female
+
+The researcher is interested in understanding whether birth weight and/or gestation period are useful for predicting the SNAP score. The researcher also wants to be sure to control for sex. Conduct regression analyses to answer the researcher’s question. Be sure to list and check your assumptions, describe any hypothesis testing you perform (including full and reduced models), and describe any remedial measures used. 
+
+- **Y (response)**:  
+- **X1 (identifier)**: 
+
+```{r}
+data_path = "/Users/elizabethnemeti/Documents/GitHub/BIOS507-Coursework/Homeworks/Homework-6/"
+data_file <- file.path(data_path, "birth_weight_expanded.csv")
+BIRTHWEIGHT_data <- read.csv(data_file, header = TRUE)
+
+str(BIRTHWEIGHT_data)
+head(BIRTHWEIGHT_data)
+```
+
+
+```{r}
+
+```
+
