@@ -1,0 +1,70 @@
+---
+title: "Homework-7-Q1"
+output: 
+  pdf_document:
+    latex_engine: xelatex
+---
+
+BIOS507 Spring 2025 | Dr Lukemire | Elizabeth Nemeti
+Due: April 16 2025
+
+**Problem 1.**
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(patchwork)
+```
+
+A study was carried out to identify risk factors associated with giving birth to a low birth weight baby (weight less than 2500 grams). Use the low birth weight data, LBW.csv. for this analysis. A description of the relevant variables in the dataset is given below. Consider the variable lbw as the outcome of interest for the following analysis. 
+
+- **Y (response)**:  lbw - Low birth weight (1: yes, 0: no) 
+- **X1 (predictor)**: age - age of the mother in years 
+- **X2 (predictor)**: race - (1: white, 2: black, 3: other)  
+- **X3 (predictor)**: smk - smoking status (1: smoker, 0: non-smoker)   
+
+```{r}
+data_path = "/Users/elizabethnemeti/Documents/GitHub/BIOS507-Coursework/Homeworks/Homework-7/"
+data_file <- file.path(data_path, "LBW.csv")
+LBW_data <- read.csv(data_file, header = TRUE)
+
+str(LBW_data)
+head(LBW_data)
+```
+**1. Conduct an exploratory analysis to assess the bivariate association of the outcome variable with age, race, and smoking status. Write a summary of your findings. **
+
+```{r}
+
+```
+
+**2. Fit a logistic regression model including age, race, and smoking status as explanatory variables. Use “non-smoker” and “white” as reference categories. Based on this model, estimate the following odds ratios (OR) and the 95% confidence intervals: a) OR comparing a smoker and a non-smoker. Does the choice of race affect the OR? b) OR associated with an increase of 5 years in the mother’s age (separate OR for each race)**
+
+```{r}
+
+```
+
+**3. Fit a new logistic regression model that includes the variables in the model from (b) and the interaction of smoking status and race. Based on this model, estimate the following odds ratios (OR) and the 95% confidence intervals: c) OR comparing a smoker and a non-smoker. Does the choice of race affect the OR? d) OR associated with an increase of 5 years in the mother’s age (separate OR for each race).**
+
+```{r}
+
+```
+
+**4. Why are your estimates different between Part 2 and 3?**
+
+```{r}
+
+```
+
+**5. Conduct goodness of fit tests for your models. What are your conclusions?**
+
+```{r}
+
+```
+
+**6. Construct the ROC curves for your models.**
+
+```{r}
+
+```

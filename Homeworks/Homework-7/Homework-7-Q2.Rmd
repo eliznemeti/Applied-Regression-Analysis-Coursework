@@ -1,0 +1,75 @@
+---
+title: "Homework-7-Q2"
+output: 
+  pdf_document:
+    latex_engine: xelatex
+---
+
+BIOS507 Spring 2025 | Dr Lukemire | Elizabeth Nemeti
+Due: April 16 2025
+
+**Problem 2.**
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(patchwork)
+```
+
+A psychologist conducted a study to examine the nature of the relation, if any, between an employee’s emotional stability (X) and the employee’s ability to perform in a task group (Y ). Emotional stability was measured by a written test for which the higher the score, the greater emotional stability. Ability to perform in a task group (Y = 1 if able, Y = 0 if unable) was evaluated by the supervisor. The results for 27 employees were recorded and are available on canvas under performance ability data.csv. Use this data to answer the following questions (adapted from your textbook). 
+
+- **Y (response)**:  X0.0 - employee’s ability to perform in a task group (Y = 1 if able, Y = 0)
+- **X1 (predictor)**: X474.0 - emotional stability (higher score = greater emotional stability)
+- **n**: 27 employees
+
+```{r}
+data_path = "/Users/elizabethnemeti/Documents/GitHub/BIOS507-Coursework/Homeworks/Homework-7/"
+data_file <- file.path(data_path, "performance_ability_data.txt")
+PERFORMANCE_data <- read.table(data_file, header = TRUE)
+
+str(PERFORMANCE_data)
+head(PERFORMANCE_data)
+```
+**1. Write down the postulated model in two forms: (1) in terms of the probabilities, (2) in terms of the log odds.**
+
+```{r}
+
+```
+
+**2. Find the MLE for β0 and β1. Write out the fitted response function in terms of the log odds.**
+
+```{r}
+
+```
+
+**3. Plot the data and overlay the fitted response function. Note that your x-axis should be emotional stability and the y-axis should be the estimated probability of ability to perform in a task group.**
+
+```{r}
+
+```
+
+**4. Obtain e^ß1 and interpret this value.**
+
+```{r}
+
+```
+
+**5. Give the estimated probability that employees with an emotional stability test score of 550 will be able to perform in a task group.**
+
+```{r}
+
+```
+
+**6. Give a rough estimate of the emotional stability test score for which 70% of the employees with that test score are expected to be able to perform in a task group**
+
+```{r}
+
+```
+
+**7. Which goodness of fit tests would be acceptable for this data?**
+
+```{r}
+
+```
