@@ -1,8 +1,9 @@
 ---
 title: "Homework-6-Q3"
-output: 
+output:
   pdf_document:
     latex_engine: xelatex
+  word_document: default
 ---
 
 BIOS507 Spring 2025 | Dr Lukemire | Elizabeth Nemeti
@@ -56,12 +57,12 @@ summary(BIRTHWEIGHT_model_full)
 ```
 Looking at the summary() output, the estimated intercept is 60.6024, therefore when birth weight = 0, gestation_period = 0, and sex = female (reference category), then SNAP score is 60.60. This doesn't hold any clinical meaning as gestation weeks and birth weights can't be 0 to measure SNAP score. ß1 for birthweight and ß2 for gestation period are both negative, indicating that as these predictors decrease, SNAP score (illness severity) increases, this makes clinical sense. ß3 for sexM is -2.68, indicating that males have lower SNAP scores by 2.68 than females typically. 
 
-Assumptions for the model:
-- relationship between each of the predictors and response is linear
-- there is no multicollinearity
-- residuals are independent
-- residuals have constant variance (homoscedasticity)
-- residuals are normally distributed
+Assumptions for the model:   
+- relationship between each of the predictors and response is linear  
+- there is no multicollinearity  
+- residuals are independent  
+- residuals have constant variance (homoscedasticity)  
+- residuals are normally distributed  
 
 ```{r}
 par(mfrow = c(1, 2))
@@ -77,7 +78,7 @@ qqnorm(residuals(BIRTHWEIGHT_model_full), main = "QQ Plot of Residuals")
 qqline(residuals(BIRTHWEIGHT_model_full), col = "cornflowerblue")
 ```
 
-Looking at the residuals vs. fitted plot, there doesn’t appear to be a clear fan shape or strong increase in spread as fitted values increase. While there are a few outliers near the edges of the plot, the overall pattern supports the assumption of constant variance. The Q-Q plot of residuals also supports the assumption of normality, showing only a slight deviation in the left tail and one outlier far from the diagonal line. These plots suggest that the model assumptions of linearity and normality are reasonably met. 
+Looking at the residuals vs. fitted plot, there doesn’t appear to be a clear fan shape or strong increase in spread as fitted values increase. While there are a few outliers near the edges of the plot, the overall pattern supports the assumption of constant variance. The QQ plot of residuals also supports the assumption of normality, showing only a slight deviation in the left tail and one outlier far from the diagonal line. These plots suggest that the model assumptions of linearity and normality are reasonably met. 
 
 Next, we will check for multicollinearity, using the variance inflation factor (VIF) to assess whether the predictors are highly correlated with each other. 
 
@@ -111,7 +112,7 @@ To test just birthweight:
 BIRTHWEIGHT_model_reduced <- lm(SNAP ~ sex + birthweight, data = BIRTHWEIGHT_data)
 anova(SEX_model_reduced, BIRTHWEIGHT_model_reduced)
 ```
-The F-statistic is 3.7663 at 1 df, and the p value is 0.0628, where p > 0.05. Therefore, we fail to reject the null hypothesis. Adding birth weight doesn’t significantly improve the model compared to using sex alone. 
+The F-statistic is 3.7663 at 1 df, and the p value is 0.0628, where p > 0.05. Therefore, we fail to reject the null hypothesis. Adding birth weight doesn’t significantly improve the model compared to once sex is accounted for. 
 
 To test just gestation period:
 
@@ -122,7 +123,7 @@ To test just gestation period:
 GESTATION_model_reduced <- lm(SNAP ~ sex + gestation_period, data = BIRTHWEIGHT_data)
 anova(SEX_model_reduced, GESTATION_model_reduced)
 ```
-The F-statistic is 2.5577 at 1 df, and the p value is 0.1214, where p > 0.05. Again, as p > 0.05, we fail to reject the null hypothesis. Adding gestation period alone also doesn't significantly improve the model compared to using sex alone.
+The F-statistic is 2.56 at 1 df, and the p value is 0.1214, where p > 0.05. Again, since p > 0.05, we fail to reject the null hypothesis. Adding gestation period alone also doesn't significantly improve the model compared to using sex alone.
 
 
 In conclusion, neither birthweight nor the gestation period significantly improved the prediction of the SNAP score when controlling for sex, based on the F-tests using nested model comparisons. Out of the predictors, gestation period came "closest" to 0.05, but since it did not fall under the threshold, we cannot consider it as a better predictor. Therefore, the reduced model including only sex is the most favourable due to its simplicity and sufficient explanatory power.
