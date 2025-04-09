@@ -20,20 +20,110 @@ library(patchwork)
 
 A researcher is interested in understanding the relationship between income (measured in thousands of dollars per year) and the amount of money spent yearly on food (also measured in thousands of dollars). The researcher has collected data on these two variables, see income.csv. Conduct an analysis to model the relationship between these two variables, using the food expenditures the outcome. Be sure to state all assumptions, check their validity, describe any statistical tests you perform, and perform any required remedial measures. 
 
-- **Y (response)**:  Mass
-- **X1 (identifier)**: Age
+- **Y (response)**:  Food Expenditures in thousands (food_expenditures)
+- **X1 (predictor)**: Income in thousands (income_thousands)
 
 ```{r}
 data_path = "/Users/elizabethnemeti/Documents/GitHub/BIOS507-Coursework/Homeworks/Homework-6/"
 data_file <- file.path(data_path, "food_income.csv")
 FOODINCOME_data <- read.csv(data_file, header = TRUE)
 
-head(FOODINCOME_data)
 str(FOODINCOME_data)
+head(FOODINCOME_data)
 ```
+Regression model: E[food_expendatures] = ß0 + ß1(income_thousands)
 
+First, let's fit a simple linear regression model. 
 
 ```{r}
+OLS_model <- lm(food_expendatures ~ income_thousands, data = FOODINCOME_data)
+summary(OLS_model)
 
+ggplot(FOODINCOME_data, aes(x = income_thousands, y = food_expendatures)) +
+  geom_point(color = "black") +
+  geom_line(aes(y = food_expendatures), color = "cornflowerblue") +
+  labs(x = "Food Expenditures (in $1000s)",
+       y = "Income (in $1000s)") +
+  theme_minimal()
+```
+Looking at the summary() output, the estimated intercept is 15.01, meaning that when income is $0, the expected food expenditure is still about $15,010.ß1 is 0.28, meaning that for each $1000 increase in income, food expenditure increases by about $280. We can fill in our model: E[Y] = 15.01 + 0.28(income in $1000s). R^2 is 0.1063, indicating the model explains only about 10.63% of variance in food expenditure. However, the p value is 0.0009293, where p < 0.05. Therefore, the slope is statistically significant, though R^2 explains little of the variance in Y. This suggests, that a different model may explain the relationship between income and food expenditure better.
+
+Assumptions of the model:
+- The relationship between income and food expenditures is linear.  
+- Residuals are normally distributed.  
+- Observations are independent (iid).  
+- The variance of residuals is constant across all X values (constant variance - homoscedasticity).  
+
+```{r}
+par(mfrow = c(1, 2))
+
+plot(OLS_model$fitted.values, residuals(OLS_model), 
+     xlab = "Fitted Values", 
+     ylab = "Residuals", 
+     main = "Residuals vs Fitted Values",
+     pch = 16)
+abline(h = 0, col = "cornflowerblue")
+
+qqnorm(residuals(OLS_model), main = "QQ Plot of Residuals")
+qqline(residuals(OLS_model), col = "cornflowerblue")
+```
+Looking at the fitted values vs residuals, we can see a clear fanning pattern, where the spread of residuals increases as fitted values increase. This indicates that homoscedasticity has been violated. Additonally, the QQ plot of residuals shows a heavy right tail, again indicating violation of normality.
+
+To deeper examine the assumption of constant variance, we can do a residuals vs fitted plot. 
+
+```{r}
+# extracting residuals and fitted vals
+res_fit_data <- tibble(
+  residuals = OLS_model$residuals,
+  fitted = OLS_model$fitted.values,
+  income = FOODINCOME_data$income_thousands
+)
+
+# generating residuals vs fitted plot
+res_fit_plot <- res_fit_data %>%
+  ggplot(aes(x = fitted, y = residuals)) +
+  geom_point()
+
+res_fit_plot
+```
+The fan-like pattern violates the homoscedasticity assumption, and is evidence that the variance is not constant. We can see that the spread of residuals increases as fitted values increase, suggesting that as income increases, variability in food expenditures increases. This is important to remediate, otherwise our interpretation of the p value, and inferences from the model output will likely be incorrect. Therefore, we are going to perform weighted least squares (WLS). The goal of WLS will be to stabilize variance by doing regression of absolute residuals on the predictor of interest (Income). The fitted values of this model will be the weights. 
+
+```{r}
+# estimate a function for the standard deviations (dont forget the absolute values)
+abs_res_model <- lm(abs(residuals) ~ income, data = res_fit_data)
+
+# use the fitted values from this standard deviation fit
+predicted_sd <- abs_res_model$fitted.values
+
+# add weights
+# gives weights where observations with higher variance get less weight (more stable ones get more influence in the model)
+weights <- 1 / predicted_sd^2
+
+# adding a visual
+abs_res_model <- lm(abs(residuals) ~ income, data = res_fit_data)
+
+ggplot(res_fit_data, aes(x = income, y = abs(residuals))) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "cornflowerblue") +
+  labs(x = "Income (in thousands)",
+       y = "Absolute Residuals") +
+  theme_minimal()
+```
+In the plot above, we can see how the variance of the residuals increases as income increases. The upward trend in the absolute residuals confirms that the higher the income observations, the greater the variability in food expenditure, which will need remedial measures. 
+
+Now that we have our standard deviation estimates we can fit the WLS model. 
+
+```{r}
+WLS_model <- lm(food_expendatures ~ income_thousands,
+                data = FOODINCOME_data,
+                weights = weights) # key is to use optional weights arg
+
+summary(WLS_model)
+```
+Now that we have two sets of estimates (ols and wls) we need to compare them. They should be similar if everything is working.
+
+```{r}
+print(cbind(OLS_model$coefficients , WLS_model$coefficients))
 ```
 
+OLS output is column [,1], and WLS output is [,2]. In the OLS model, the intecept was 15.01 and the slope (ß1) was 0.280. After applying WLS to address the heteroscedasticity, the intercept increased slightly to 16.77, and the slope (ß1) decreased slightly to 0.256. The WLS model is E[food_expendatures] = 16.77 + 0.256(income). This means, that after using WLS, each $1000 increase in income sees a $256 increase in food expenditure, comapred to the $280 increase with OLS. As the estimates are fairly similar, we do not need to continue iterating with WLS. 

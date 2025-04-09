@@ -21,50 +21,101 @@ library(patchwork)
 A person’s muscle mass is expected to decrease with age. To explore this relationship in women, a nutritionist randomly selected 15 women from each 10-year age group, beginning with age 40 and ending with age 79. The dataset is “musclemass.txt”. Note: These questions are adapted from questions 8.4 and 8.5 in the textbook.
 
 - **Y (response)**:  Mass
-- **X1 (identifier)**: Age
+- **X1 (predictor)**: Age
 
 ```{r}
 data_path = "/Users/elizabethnemeti/Documents/GitHub/BIOS507-Coursework/Homeworks/Homework-6/"
 data_file <- file.path(data_path, "musclemass.txt")
-MUSCLEMASS_data <- read.delim(data_file, header = TRUE)
+MUSCLEMASS_data <- read.table(data_file, header = TRUE)
 
-head(MUSCLEMASS_data)
 str(MUSCLEMASS_data)
+head(MUSCLEMASS_data)
 ```
 **Part A. Fit a quadratic regression model with centered age. Plot the fitted regression function and the data. Does the quadratic regression function visually appear to be a good fit here? Report the R2 value.**
 
 ```{r}
+MUSCLEMASS_data <- MUSCLEMASS_data %>%
+  mutate(age_centered = Age - mean(Age), # center age to reduce multicollinearity between Age and Age^2
+         age_centered_sq = age_centered^2) # ^2 for the quadratic part
 
+head(MUSCLEMASS_data)
+
+# quadratic regression model: E[Mass] = ß0 + ß1(age_centered) + ß2 (age_centered_sq)
+
+MUSCLEMASS_model <- lm(Mass ~ age_centered + age_centered_sq, data = MUSCLEMASS_data)
+summary(MUSCLEMASS_model)
+
+MUSCLEMASS_data <- MUSCLEMASS_data %>%
+  mutate(mass_prediction = predict(MUSCLEMASS_model)) # get predicted vals
+
+ggplot(MUSCLEMASS_data, aes(x = Age, y = Mass)) +
+  geom_point(color = "black") +
+  geom_line(aes(y = mass_prediction), color = "cornflowerblue") + # using Age for x axis not centered age so it makes visual sense
+  labs(x = "Age",
+       y = "Muscle Mass") +
+  theme_minimal()
 ```
-
+Yes, the quadratic regression does appear to be a good fit, there is a curved trend downwards in muscle mass as Age increases. R^2 is 0.7632, therefore the current model explains 76.32% of the variability in muscle mass. 
 
 **Part B. Conduct an overall test for model fit using α = 0.05. What are your findings?**
 
 ```{r}
-
+summary(MUSCLEMASS_model)
 ```
+Here we're interested in whether age is important at all to the model.
+
+H0: ß1 = ß2 = 0 (aka model explains doesn't explain muscle mass)
+HA: at least ß1 or ß2 != 0 (aka model can explain some variation in muscle mass)
+
+We do an F-test, and our F-statistic for the model is 91.84 with 2 df, and a pvalue of 2.2e-16, where p < 0.05. Since the p value is less than 0.05, we reject the null hypothesis. Age is therefore significantly associated with muscle, and the quadratic model provides a better fit than an intercept only model.
 
 **Part C. Test whether the quadratic term can be dropped from the model using α = 0.05. What are your findings?**
 
 ```{r}
+MUSCLEMASS_linear <- lm(Mass ~ age_centered, data = MUSCLEMASS_data) # here's the linear model
+# MUSCLEMASS_model <- lm(Mass ~ age_centered + age_centered_sq, data = MUSCLEMASS_data) # this was the quadratic model we defined earlier 
+
+anova(MUSCLEMASS_linear, MUSCLEMASS_model) 
 
 ```
+Here, we're using a nested model comparison to test whether adding the quadratic term (age_centered_sq) improves the model fit beyond a simple linear model (just age_centered term). Basically, do we need a quadratic or does a straight line suffice for good model fit. We use anova() to run an F-test and compare the reduced model and full model. The F-statistic is 3.15, with a p-value of 0.081, where p > 0.05. Since the p value is greater than 0.05, we fail to reject the null hypothesis. Therefore, a simple linear model suffices to explain the relationship between muscle mass and age, and there is not enough improvement in adding this term to warrant the added complexity. 
 
-**Part D. Find and interpret a 95% confidence interval for the mean muscle mass for a women who is age 50.**
+**Part D. Find and interpret a 95% confidence interval for the mean muscle mass for women age 50.**
+
+Since we found the quadratic model was not a significant improvement from the simple linear model, we'll move forward with the simple linear model. 
 
 ```{r}
+age_mean <- mean(MUSCLEMASS_data$Age)
+age_centered_50 <- 50 - age_mean # making sure 50 is centered
+pt_50 <- data.frame(age_centered = age_centered_50)
+
+predict(MUSCLEMASS_linear, newdata = pt_50, interval = "confidence", level = 0.95)
 
 ```
 
-**Part E. Find and interpret a 95% prediction interval for the muscle mass for a women who is age 50.**
+Here we are interested in the mean muscle mass for women at the age of 50, not just one individual. The predicted mean muscle mass for a woman who is age 50 is 96.85 units, with a 95% confidence interval of (94.07, 99.62). 
+
+**Part E. Find and interpret a 95% prediction interval for the muscle mass for a woman who is age 50.**
+
+Here we are interested in the muscle mass for an individual woman at age 50, not the mean. Interval therefore, will now be set to "prediction" instead of "confidence". 
 
 ```{r}
-
+predict(MUSCLEMASS_linear, newdata = pt_50, interval = "prediction", level = 0.95)
 ```
+
+The predicted muscle mass for a woman who is age 50 is 96.845 units, with a 95% prediction interval of (80.25, 113.44). The prediction interval is much wider than the confidence interval, this is due to greater uncertainty when predicting for an individual rather than the mean. 
 
 **Part F. Fit the third-order model and test for the significance of the cubic term (using α = 0.05) **
 
 ```{r}
+MUSCLEMASS_data <- MUSCLEMASS_data %>%
+  mutate(age_centered_cubic = age_centered^3) #adding the cubic term, just like earlier we added the squared term
 
+MUSCLEMASS_model_cubic <- lm(Mass ~ age_centered + age_centered_sq + age_centered_cubic, data = MUSCLEMASS_data)
+
+summary(MUSCLEMASS_model_cubic)
 ```
+H0: ß3 = 0 (the cubic term does not improve model fit)
+HA: ß3 != 0 (the cubic term adds value)
 
+Here, we're interested in testing whether whether the cubic term significantly improves model fit. R^2 is 0.7637, therefore this cubic model explains about 76.37% of the variance in muscle mass. This is a slight increase from the quadratic model R^2 at 76.32. The F-statistic is reported as 60.34 at 56 df, and the p value for the cubic term is 0.7193. As where 0.72 > 0.05, we fail to reject the null hypothesis, and conclude that the cubic term does not significantly improve model fit.

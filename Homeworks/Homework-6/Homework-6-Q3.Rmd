@@ -16,19 +16,23 @@ library(dplyr)
 library(ggplot2)
 library(tidyverse)
 library(patchwork)
+library(car) # for multicollinearity 
+library (glmnet) # for ridge regression
 ```
 
 In a previous homework, you analyzed a random sample of data on infants’ birth weights (Y , lbs) and gestation period (X1, weeks). I’ve uploaded a new version of this data to canvas called birth weight expanded.csv. There are 4 variables in this data set:
 
-- SNAP Score for Neonatal Acute Physiology, a continuous measure of illness severity. Higher scores indicate more severe illness.
-- birthweight Birth weight in pounds
-- gestation period gestational age at birth, in weeks
-- sex whether the infant is male or female
+- SNAP Score: for Neonatal Acute Physiology, a continuous measure of illness severity. Higher scores indicate more severe illness   
+- Birthweight: Birth weight in pounds  
+- Gestation period: gestational age at birth, in weeks  
+- Sex: whether the infant is male or female  
 
 The researcher is interested in understanding whether birth weight and/or gestation period are useful for predicting the SNAP score. The researcher also wants to be sure to control for sex. Conduct regression analyses to answer the researcher’s question. Be sure to list and check your assumptions, describe any hypothesis testing you perform (including full and reduced models), and describe any remedial measures used. 
 
-- **Y (response)**:  
-- **X1 (identifier)**: 
+- **Y (response)**: SNAP (continuous)
+- **X1 (predictor)**: birthweight (lbs) (continuous)
+- **X2 (predictor)**: gestation_period (weeks) (continuous)
+- **X3 (predictor)**: sex (male/female) (categorical)
 
 ```{r}
 data_path = "/Users/elizabethnemeti/Documents/GitHub/BIOS507-Coursework/Homeworks/Homework-6/"
@@ -37,10 +41,88 @@ BIRTHWEIGHT_data <- read.csv(data_file, header = TRUE)
 
 str(BIRTHWEIGHT_data)
 head(BIRTHWEIGHT_data)
-```
 
+# let's make sure that sex is categorical
+# sexM = 0 is female (also reference group)
+# sexM = 1 is male
+BIRTHWEIGHT_data <- BIRTHWEIGHT_data %>%
+  mutate(sex = factor(sex))
+```
+To start, we'll fit the full MLR model: E[SNAP] = ß0 + ß1(birthweight) + ß2(gestation_period) + ß3(sex).
 
 ```{r}
+BIRTHWEIGHT_model_full <- lm(SNAP ~ birthweight + gestation_period + sex, data = BIRTHWEIGHT_data)
+summary(BIRTHWEIGHT_model_full)
+```
+Looking at the summary() output, the estimated intercept is 60.6024, therefore when birth weight = 0, gestation_period = 0, and sex = female (reference category), then SNAP score is 60.60. This doesn't hold any clinical meaning as gestation weeks and birth weights can't be 0 to measure SNAP score. ß1 for birthweight and ß2 for gestation period are both negative, indicating that as these predictors decrease, SNAP score (illness severity) increases, this makes clinical sense. ß3 for sexM is -2.68, indicating that males have lower SNAP scores by 2.68 than females typically. 
 
+Assumptions for the model:
+- relationship between each of the predictors and response is linear
+- there is no multicollinearity
+- residuals are independent
+- residuals have constant variance (homoscedasticity)
+- residuals are normally distributed
+
+```{r}
+par(mfrow = c(1, 2))
+
+plot(BIRTHWEIGHT_model_full$fitted.values, residuals(BIRTHWEIGHT_model_full), 
+     xlab = "Fitted Values", 
+     ylab = "Residuals", 
+     main = "Residuals vs Fitted Values",
+     pch = 16)
+abline(h = 0, col = "cornflowerblue")
+
+qqnorm(residuals(BIRTHWEIGHT_model_full), main = "QQ Plot of Residuals")
+qqline(residuals(BIRTHWEIGHT_model_full), col = "cornflowerblue")
 ```
 
+Looking at the residuals vs. fitted plot, there doesn’t appear to be a clear fan shape or strong increase in spread as fitted values increase. While there are a few outliers near the edges of the plot, the overall pattern supports the assumption of constant variance. The Q-Q plot of residuals also supports the assumption of normality, showing only a slight deviation in the left tail and one outlier far from the diagonal line. These plots suggest that the model assumptions of linearity and normality are reasonably met. 
+
+Next, we will check for multicollinearity, using the variance inflation factor (VIF) to assess whether the predictors are highly correlated with each other. 
+
+```{r}
+vif(BIRTHWEIGHT_model_full)
+```
+
+The VIF values are: birthweight = 1.52, gestation_period = 1.49, sex = 1.05. The values are quite close to 1, indicating that there is very little to no multicollinearity among the predictors. 
+
+Now that we have checked the assumptions, and none are violated we can continue to our hypotheses and testing the predictors. 
+
+First, we'll check the full model vs the sex only model.
+
+- H0: ß1 = ß2 = 0 (birthweight and gestation period don't improve the model controlling for sex)  
+- HA: ß1 or ß2 != 0 (birthweight and gestation period do improve the model controlling for sex)  
+
+```{r}
+SEX_model_reduced <- lm(SNAP ~ sex, data = BIRTHWEIGHT_data)
+anova(SEX_model_reduced, BIRTHWEIGHT_model_full)
+```
+Based on the F-test comparing the full model and a reduced model including only sex. 
+
+The F-statistic is 2.0529 at 2 df, and the p value is 0.1487, where p > 0.05. Therefore, we fail to reject the null hypothesis. Adding birth weight and gestation both doesn’t significantly improve the model compared to using sex alone. Now to test the individual predictors. 
+
+To test just birthweight:  
+
+- H0: ß1 = 0 (birthweight doesn't improve the model controlling for sex)
+- HA: ß1 != 0 (birthweight does improve the model controlling for sex)  
+
+```{r}
+BIRTHWEIGHT_model_reduced <- lm(SNAP ~ sex + birthweight, data = BIRTHWEIGHT_data)
+anova(SEX_model_reduced, BIRTHWEIGHT_model_reduced)
+```
+The F-statistic is 3.7663 at 1 df, and the p value is 0.0628, where p > 0.05. Therefore, we fail to reject the null hypothesis. Adding birth weight doesn’t significantly improve the model compared to using sex alone. 
+
+To test just gestation period:
+
+- H0: ß2 = 0 (gestation period doesn't improve the model controlling for sex)
+- HA: ß2 != 0 (gestation period does improve the model controlling for sex)  
+
+```{r}
+GESTATION_model_reduced <- lm(SNAP ~ sex + gestation_period, data = BIRTHWEIGHT_data)
+anova(SEX_model_reduced, GESTATION_model_reduced)
+```
+The F-statistic is 2.5577 at 1 df, and the p value is 0.1214, where p > 0.05. Again, as p > 0.05, we fail to reject the null hypothesis. Adding gestation period alone also doesn't significantly improve the model compared to using sex alone.
+
+
+In conclusion, neither birthweight nor the gestation period significantly improved the prediction of the SNAP score when controlling for sex, based on the F-tests using nested model comparisons. Out of the predictors, gestation period came "closest" to 0.05, but since it did not fall under the threshold, we cannot consider it as a better predictor. Therefore, the reduced model including only sex is the most favourable due to its simplicity and sufficient explanatory power.
